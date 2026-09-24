@@ -149,8 +149,8 @@ Analytical verification of 7 canonical Euclidean rules (`src/engines/research/ca
 
 ### Installation & Development Run
 ```bash
-git clone https://github.com/your-username/geometry-reasoning-stand.git
-cd geometry-reasoning-stand
+git clone https://github.com/a50kv109/geometry-reasoning-stand-2.git
+cd geometry-reasoning-stand-2
 npm install
 npm run dev
 ```

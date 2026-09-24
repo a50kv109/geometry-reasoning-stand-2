@@ -31,8 +31,8 @@ The Stand is an interactive geometry environment and deterministic reasoning tes
 
 ### Local Setup
 ```bash
-git clone https://github.com/your-username/geometry-reasoning-stand.git
-cd geometry-reasoning-stand
+git clone https://github.com/a50kv109/geometry-reasoning-stand-2.git
+cd geometry-reasoning-stand-2
 npm install
 ```
 

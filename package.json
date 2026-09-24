@@ -1,6 +1,6 @@
 {
-  "name": "geometry-reasoning-stand",
-  "version": "1.0.0",
+  "name": "geometry-reasoning-stand-2",
+  "version": "2.0.0",
   "description": "Deterministic geometry learning and reasoning verification stand for humans and AI agents.",
   "license": "MIT",
   "private": true,

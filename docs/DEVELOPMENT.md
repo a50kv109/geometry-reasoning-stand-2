@@ -3,7 +3,7 @@
 ## 1. Directory Structure
 
 ```
-geometry-reasoning-stand/
+geometry-reasoning-stand-2/
 ├── docs/                   # Complete architectural and reference documentation
 ├── examples/               # Standalone usage and integration examples
 ├── src/
