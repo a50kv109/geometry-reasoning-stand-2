@@ -1,0 +1,8 @@
+{
+  "name": "Remix geometry-reasoning-stand",
+  "description": "Интерактивный учебный стенд: треугольник как система взаимосвязей на окружности                                                           Deterministic geometry learning and reasoning verification stand for humans and AI agents.                             ",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
