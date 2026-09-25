@@ -188,11 +188,19 @@ The union type `SemanticCommandType` in `src/engines/semantic/types.ts` contains
 | 17 | `GET_RELATIONS` | **No** | `filter?: { entityId?, type?, status? }` | Array of active `SemanticRelation` |
 | 18 | `GET_MEASUREMENTS` | **No** | `filter?: { target?, semanticType? }` | Array of `SemanticQuantity` (angles, lengths) |
 | 19 | `GET_VERIFIED_FACTS` | **No** | None | Array of `ConfigurationEpistemicEntry` (VERIFIED) |
-| 20 | `BATCH_SEMANTIC_COMMANDS`| **Atomic**| `commands: SemanticCommand[]` | Executes array of commands sequentially |
+| 20 | `VERIFY_RELATION` | **No** | `relation: string, subject?, reference?` | Epistemic verification (`VERIFIED`, `REFUTED`, `UNVERIFIED`) |
+| 21 | `SAVE_PROJECT` | **No** | `name?, description?, author?, tags?` | Serializes current SSOT into `GeometryProject` JSON |
+| 22 | `LOAD_PROJECT` | **Yes** | `project: unknown` (JSON string or object) | Validates, deserializes, and recomputes living DAG |
+| 23 | `BATCH_SEMANTIC_COMMANDS`| **Atomic**| `commands: SemanticCommand[]` | Executes array of commands sequentially |
 
 ---
 
-## 5. Natural Language Adapter Pipeline
+## 5. Persistence & Project Model
+See [docs/GEOMETRY_PROJECT.md](./GEOMETRY_PROJECT.md) for full serialization, schema versioning, and validation rules.
+
+---
+
+## 6. Natural Language Adapter & AAM Gateway Pipeline
 
 In `src/engines/semantic/naturalLanguageAdapter.ts`, the Stand provides a deterministic parser:
 - `"биссектриса угла C"` $\to$ `CONSTRUCT_ANGLE_BISECTOR` (vertex: "C")

@@ -5,6 +5,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [2.1.0] - 2026-09-25
+
+### Added
+- **Geometry Project Persistence (`GeometryProjectV1`)**:
+  - Deterministic serialization/deserialization with versioned JSON format (`geometry-reasoning-stand-project`).
+  - Strict validation layer with transaction safety (`INVALID PROJECT → NO STATE MUTATION`).
+  - Dynamic Construction DAG restoration and complete dependency recomputation.
+  - Browser UI menu for Save Project, Open Project, and New Project.
+  - Semantic commands `SAVE_PROJECT` and `LOAD_PROJECT` for AI reasoning agents.
+  - Expanded 30-test verification matrix (`npm run test:project`).
+- **AAM Language Gateway v0.1**:
+  - Natural language semantic intent extraction across Russian, Ukrainian, and English.
+  - Dedicated interactive AAM workbench terminal with live two-layer trace (Language Kernel Intent $\to$ Stand Execution).
+  - Extended deterministic relation verifier `VERIFY_RELATION` (parallel, perpendicular, diameter, Thales, point-on-circle).
+  - Benchmark test suites: positive (20), negative (20), multilingual equivalence (10).
+- **Multilingual Support (RU / UK / EN)**:
+  - React Context localization (`src/i18n/`) with persistent language selection in localStorage.
+  - UI language switcher placed in the top navigation header.
+
 ## [2.0.0] - 2026-09-24
 
 ### Initial Public V2 Release

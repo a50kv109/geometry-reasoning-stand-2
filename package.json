@@ -1,12 +1,12 @@
 {
   "name": "geometry-reasoning-stand-2",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Deterministic geometry learning and reasoning verification stand for humans and AI agents.",
   "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
+    "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -32,7 +32,9 @@
     "test:agent-semantic": "tsx src/engines/tests/testAgentSemanticInterface.ts",
     "test:packet1": "tsx src/engines/tests/testPacket1TriangleCircle.ts",
     "test:packet2": "tsx src/engines/tests/testPacket2FundamentalsPerpendiculars.ts",
-    "test:all": "npm run test:kernel && npm run test:env && npm run test:tool && npm run test:temporal && npm run test:school && npm run test:research && npm run test:experiment && npm run test:graph && npm run test:ev01 && npm run test:ux01 && npm run test:gcm01 && npm run test:parallel-preview && npm run test:parametric && npm run test:bisector && npm run test:s03 && npm run test:s01s02 && npm run test:angle-input && npm run test:agent-semantic && npm run test:packet1 && npm run test:packet2"
+    "test:aam": "tsx src/engines/tests/testAAMGatewayBenchmark.ts",
+    "test:project": "tsx src/engines/tests/testGeometryProjectSerialization.ts",
+    "test:all": "npm run test:kernel && npm run test:env && npm run test:tool && npm run test:temporal && npm run test:school && npm run test:research && npm run test:experiment && npm run test:graph && npm run test:ev01 && npm run test:ux01 && npm run test:gcm01 && npm run test:parallel-preview && npm run test:parametric && npm run test:bisector && npm run test:s03 && npm run test:s01s02 && npm run test:angle-input && npm run test:agent-semantic && npm run test:packet1 && npm run test:packet2 && npm run test:aam && npm run test:project"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

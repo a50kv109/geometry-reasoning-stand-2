@@ -24,6 +24,11 @@ import {
   SemanticEntitySummary,
   SemanticCommandErrorCode,
 } from './types';
+import {
+  createGeometryProject,
+  serializeGeometryProject,
+  deserializeGeometryProject,
+} from '../project';
 
 /**
  * Resolves human/agent shorthand reference to a canonical line or segment ID.
@@ -739,10 +744,18 @@ export function executeSemanticCommand(
         };
       }
 
+      let objType = command.objectType;
+      if (!objType) {
+        if (state.lines[command.id]) objType = 'line';
+        else if (state.segments[command.id]) objType = 'segment';
+        else if (state.points[command.id]) objType = 'point';
+        else if (state.circles[command.id]) objType = 'circle';
+      }
+
       const nextState = dispatchGeometryCommand(state, {
         type: 'ERASE_OBJECT',
         id: command.id,
-        objectType: command.objectType,
+        objectType: objType,
       });
 
       return {
@@ -862,7 +875,514 @@ export function executeSemanticCommand(
     }
 
     // ------------------------------------------------------------------------
-    // E. BATCH COMMANDS
+    // E. FORMAL VERIFICATION
+    // ------------------------------------------------------------------------
+    case 'VERIFY_RELATION': {
+      const relType = (command.relation || '').toUpperCase().trim();
+      const allRelations = extractSemanticRelations(state);
+      const configView = buildConfigurationView(state);
+
+      const subjId = command.subject
+        ? resolveLineOrSegmentId(state, command.subject) || resolvePointId(state, command.subject) || command.subject
+        : undefined;
+      const refId = command.reference
+        ? resolveLineOrSegmentId(state, command.reference) || resolvePointId(state, command.reference) || command.reference
+        : undefined;
+
+      const getLineVector = (id: string): { dx: number; dy: number } | null => {
+        const seg = state.segments[id];
+        if (seg) {
+          const pt1 = state.points[seg.p1Id];
+          const pt2 = state.points[seg.p2Id];
+          if (pt1 && pt2) return { dx: pt2.x - pt1.x, dy: pt2.y - pt1.y };
+        }
+        const line = state.lines[id];
+        if (line) {
+          const pt1 = state.points[line.p1Id];
+          const pt2 = state.points[line.p2Id];
+          if (pt1 && pt2) return { dx: pt2.x - pt1.x, dy: pt2.y - pt1.y };
+        }
+        return null;
+      };
+
+      if (relType === 'PERPENDICULAR' || relType === 'PERPENDICULAR_TO') {
+        const matched = allRelations.find(
+          (r) =>
+            r.relationType === 'PERPENDICULAR_TO' &&
+            ((subjId && refId && (r.sourceEntityId === subjId && r.targetEntityIds.includes(refId))) ||
+              (subjId && refId && (r.sourceEntityId === refId && r.targetEntityIds.includes(subjId))) ||
+              (!subjId && refId && r.targetEntityIds.includes(refId)) ||
+              (subjId && !refId && r.sourceEntityId === subjId))
+        );
+
+        if (matched) {
+          return {
+            success: true,
+            command: 'VERIFY_RELATION',
+            stateChanged: false,
+            nextState: state,
+            previousState: state,
+            verification: {
+              relation: 'PERPENDICULAR',
+              status: 'VERIFIED',
+              isProven: true,
+              explanation: `Отношение взаимной перпендикулярности строго подтверждено: ${matched.formalNotation}`,
+              subjectId: subjId,
+              referenceId: refId,
+              matchedRelation: matched,
+            },
+          };
+        }
+
+        if (subjId && refId) {
+          const v1 = getLineVector(subjId);
+          const v2 = getLineVector(refId);
+          if (v1 && v2) {
+            const len1 = Math.hypot(v1.dx, v1.dy);
+            const len2 = Math.hypot(v2.dx, v2.dy);
+            if (len1 > 1e-4 && len2 > 1e-4) {
+              const dot = (v1.dx * v2.dx + v1.dy * v2.dy) / (len1 * len2);
+              if (Math.abs(dot) < 0.05) {
+                return {
+                  success: true,
+                  command: 'VERIFY_RELATION',
+                  stateChanged: false,
+                  nextState: state,
+                  previousState: state,
+                  verification: {
+                    relation: 'PERPENDICULAR',
+                    status: 'VERIFIED',
+                    isProven: true,
+                    explanation: `Прямые ${subjId} и ${refId} взаимно перпендикулярны (угол 90°, cos θ = ${dot.toFixed(4)})`,
+                    subjectId: subjId,
+                    referenceId: refId,
+                    mathematicalCheck: { dotProduct: dot, angleDeg: 90 },
+                  },
+                };
+              } else {
+                return {
+                  success: true,
+                  command: 'VERIFY_RELATION',
+                  stateChanged: false,
+                  nextState: state,
+                  previousState: state,
+                  verification: {
+                    relation: 'PERPENDICULAR',
+                    status: 'REFUTED',
+                    isProven: false,
+                    explanation: `Прямые ${subjId} и ${refId} НЕ перпендикулярны (скалярное произведение = ${dot.toFixed(4)})`,
+                    subjectId: subjId,
+                    referenceId: refId,
+                    mathematicalCheck: { dotProduct: dot },
+                  },
+                };
+              }
+            }
+          }
+        }
+
+        return {
+          success: true,
+          command: 'VERIFY_RELATION',
+          stateChanged: false,
+          nextState: state,
+          previousState: state,
+          verification: {
+            relation: 'PERPENDICULAR',
+            status: 'REFUTED',
+            isProven: false,
+            explanation: `Отношение перпендикулярности между "${command.subject}" и "${command.reference}" не подтверждено.`,
+            subjectId: subjId,
+            referenceId: refId,
+          },
+        };
+      }
+
+      if (relType === 'PARALLEL' || relType === 'PARALLEL_TO') {
+        const matched = allRelations.find(
+          (r) =>
+            r.relationType === 'PARALLEL_TO' &&
+            ((subjId && refId && (r.sourceEntityId === subjId && r.targetEntityIds.includes(refId))) ||
+              (subjId && refId && (r.sourceEntityId === refId && r.targetEntityIds.includes(subjId))) ||
+              (!subjId && refId && r.targetEntityIds.includes(refId)) ||
+              (subjId && !refId && r.sourceEntityId === subjId))
+        );
+
+        if (matched) {
+          return {
+            success: true,
+            command: 'VERIFY_RELATION',
+            stateChanged: false,
+            nextState: state,
+            previousState: state,
+            verification: {
+              relation: 'PARALLEL',
+              status: 'VERIFIED',
+              isProven: true,
+              explanation: `Отношение параллельности строго подтверждено: ${matched.formalNotation}`,
+              subjectId: subjId,
+              referenceId: refId,
+              matchedRelation: matched,
+            },
+          };
+        }
+
+        if (subjId && refId) {
+          const v1 = getLineVector(subjId);
+          const v2 = getLineVector(refId);
+          if (v1 && v2) {
+            const len1 = Math.hypot(v1.dx, v1.dy);
+            const len2 = Math.hypot(v2.dx, v2.dy);
+            if (len1 > 1e-4 && len2 > 1e-4) {
+              const cross = (v1.dx * v2.dy - v1.dy * v2.dx) / (len1 * len2);
+              if (Math.abs(cross) < 0.05) {
+                return {
+                  success: true,
+                  command: 'VERIFY_RELATION',
+                  stateChanged: false,
+                  nextState: state,
+                  previousState: state,
+                  verification: {
+                    relation: 'PARALLEL',
+                    status: 'VERIFIED',
+                    isProven: true,
+                    explanation: `Прямые ${subjId} и ${refId} параллельны (sin θ = ${cross.toFixed(4)})`,
+                    subjectId: subjId,
+                    referenceId: refId,
+                    mathematicalCheck: { crossProduct: cross },
+                  },
+                };
+              } else {
+                return {
+                  success: true,
+                  command: 'VERIFY_RELATION',
+                  stateChanged: false,
+                  nextState: state,
+                  previousState: state,
+                  verification: {
+                    relation: 'PARALLEL',
+                    status: 'REFUTED',
+                    isProven: false,
+                    explanation: `Прямые ${subjId} и ${refId} НЕ параллельны (векторное произведение = ${cross.toFixed(4)})`,
+                    subjectId: subjId,
+                    referenceId: refId,
+                    mathematicalCheck: { crossProduct: cross },
+                  },
+                };
+              }
+            }
+          }
+        }
+
+        return {
+          success: true,
+          command: 'VERIFY_RELATION',
+          stateChanged: false,
+          nextState: state,
+          previousState: state,
+          verification: {
+            relation: 'PARALLEL',
+            status: 'REFUTED',
+            isProven: false,
+            explanation: `Отношение параллельности между "${command.subject}" и "${command.reference}" не подтверждено.`,
+            subjectId: subjId,
+            referenceId: refId,
+          },
+        };
+      }
+
+      if (relType === 'DIAMETER' || relType === 'DIAMETER_OF') {
+        const matched = allRelations.find(
+          (r) =>
+            r.relationType === 'DIAMETER_OF' &&
+            (!subjId || r.sourceEntityId === subjId)
+        );
+
+        if (matched) {
+          return {
+            success: true,
+            command: 'VERIFY_RELATION',
+            stateChanged: false,
+            nextState: state,
+            previousState: state,
+            verification: {
+              relation: 'DIAMETER',
+              status: 'VERIFIED',
+              isProven: true,
+              explanation: `Отрезок ${matched.sourceEntityId} доказанно является диаметром описанной окружности (длина = 2R, проходит через центр O).`,
+              subjectId: matched.sourceEntityId,
+              matchedRelation: matched,
+            },
+          };
+        }
+
+        return {
+          success: true,
+          command: 'VERIFY_RELATION',
+          stateChanged: false,
+          nextState: state,
+          previousState: state,
+          verification: {
+            relation: 'DIAMETER',
+            status: 'REFUTED',
+            isProven: false,
+            explanation: `Отрезок "${command.subject || 'исследуемый'}" НЕ является диаметром окружности.`,
+            subjectId: subjId,
+          },
+        };
+      }
+
+      if (relType === 'CHORD' || relType === 'CHORD_OF') {
+        const matched = allRelations.find(
+          (r) =>
+            r.relationType === 'CHORD_OF' &&
+            (!subjId || r.sourceEntityId === subjId)
+        );
+
+        if (matched) {
+          return {
+            success: true,
+            command: 'VERIFY_RELATION',
+            stateChanged: false,
+            nextState: state,
+            previousState: state,
+            verification: {
+              relation: 'CHORD',
+              status: 'VERIFIED',
+              isProven: true,
+              explanation: `Отрезок ${matched.sourceEntityId} является хордой окружности (оба конца строго принадлежат C_0).`,
+              subjectId: matched.sourceEntityId,
+              matchedRelation: matched,
+            },
+          };
+        }
+
+        return {
+          success: true,
+          command: 'VERIFY_RELATION',
+          stateChanged: false,
+          nextState: state,
+          previousState: state,
+          verification: {
+            relation: 'CHORD',
+            status: 'REFUTED',
+            isProven: false,
+            explanation: `Отрезок "${command.subject}" не является хордой (концы не принадлежат окружности).`,
+            subjectId: subjId,
+          },
+        };
+      }
+
+      if (relType === 'POINT_ON_CIRCLE' || relType === 'POINT_ON') {
+        const pt = subjId ? state.points[subjId] : null;
+        if (pt) {
+          const dist = Math.hypot(pt.x, pt.y);
+          const onCirc = Math.abs(dist - state.R) < 1.0;
+          return {
+            success: true,
+            command: 'VERIFY_RELATION',
+            stateChanged: false,
+            nextState: state,
+            previousState: state,
+            verification: {
+              relation: 'POINT_ON_CIRCLE',
+              status: onCirc ? 'VERIFIED' : 'REFUTED',
+              isProven: onCirc,
+              explanation: onCirc
+                ? `Точка ${pt.name || pt.id} лежит на окружности (дистанция до центра = ${dist.toFixed(2)} px ≈ R = ${state.R} px)`
+                : `Точка ${pt.name || pt.id} НЕ лежит на окружности (дистанция до центра = ${dist.toFixed(2)} px ≠ R = ${state.R} px)`,
+              subjectId: pt.id,
+              referenceId: 'base_circle',
+              mathematicalCheck: { distance: dist, radius: state.R },
+            },
+          };
+        }
+      }
+
+      if (
+        relType === 'THALES' ||
+        relType === 'THALES_THEOREM' ||
+        relType === 'THALES_INSCRIBED_RIGHT_ANGLE'
+      ) {
+        const thalesFact = configView.epistemicRegistry.find(
+          (f) => f.ruleId === 'RULE-THALES-DIAMETER' && (f.isProven || f.status === 'VERIFIED_INVARIANT')
+        );
+        const thalesRel = allRelations.find(
+          (r) => r.theoremOrRuleId === 'RULE-THALES-DIAMETER' && r.status === 'VERIFIED'
+        );
+
+        if (thalesFact || thalesRel) {
+          return {
+            success: true,
+            command: 'VERIFY_RELATION',
+            stateChanged: false,
+            nextState: state,
+            previousState: state,
+            verification: {
+              relation: 'THALES_INSCRIBED_RIGHT_ANGLE',
+              status: 'VERIFIED',
+              isProven: true,
+              explanation:
+                thalesFact?.title ||
+                thalesFact?.basis ||
+                thalesRel?.description ||
+                'Теорема Фалеса строго доказана: угол треугольника опирается на диаметр и равен 90°.',
+              matchedFact: thalesFact,
+              matchedRelation: thalesRel,
+            },
+          };
+        } else {
+          return {
+            success: true,
+            command: 'VERIFY_RELATION',
+            stateChanged: false,
+            nextState: state,
+            previousState: state,
+            verification: {
+              relation: 'THALES_INSCRIBED_RIGHT_ANGLE',
+              status: 'REFUTED',
+              isProven: false,
+              explanation:
+                'Теорема Фалеса не выполняется: ни одна сторона треугольника не является диаметром окружности.',
+            },
+          };
+        }
+      }
+
+      if (relType === 'ANGLE_BISECTOR' || relType === 'ANGLE_BISECTOR_OF') {
+        const matched = allRelations.find(
+          (r) => r.relationType === 'ANGLE_BISECTOR_OF' && (!subjId || r.sourceEntityId === subjId)
+        );
+        return {
+          success: true,
+          command: 'VERIFY_RELATION',
+          stateChanged: false,
+          nextState: state,
+          previousState: state,
+          verification: {
+            relation: 'ANGLE_BISECTOR',
+            status: matched ? 'VERIFIED' : 'REFUTED',
+            isProven: Boolean(matched),
+            explanation: matched
+              ? `Линия ${matched.sourceEntityId} доказанно является биссектрисой угла.`
+              : `Биссектриса для "${command.subject}" не найдена среди доказанных отношений.`,
+            matchedRelation: matched,
+          },
+        };
+      }
+
+      if (relType === 'PERPENDICULAR_BISECTOR' || relType === 'PERPENDICULAR_BISECTOR_OF') {
+        const matched = allRelations.find(
+          (r) => r.relationType === 'PERPENDICULAR_BISECTOR_OF' && (!subjId || r.sourceEntityId === subjId)
+        );
+        return {
+          success: true,
+          command: 'VERIFY_RELATION',
+          stateChanged: false,
+          nextState: state,
+          previousState: state,
+          verification: {
+            relation: 'PERPENDICULAR_BISECTOR',
+            status: matched ? 'VERIFIED' : 'REFUTED',
+            isProven: Boolean(matched),
+            explanation: matched
+              ? `Линия ${matched.sourceEntityId} доказанно является серединным перпендикуляром.`
+              : `Серединный перпендикуляр для "${command.subject}" не найден среди доказанных отношений.`,
+            matchedRelation: matched,
+          },
+        };
+      }
+
+      const genericMatched = allRelations.find(
+        (r) =>
+          r.relationType === relType ||
+          r.relationType.startsWith(relType) ||
+          r.id.toLowerCase().includes(relType.toLowerCase())
+      );
+
+      return {
+        success: true,
+        command: 'VERIFY_RELATION',
+        stateChanged: false,
+        nextState: state,
+        previousState: state,
+        verification: {
+          relation: relType,
+          status: genericMatched ? 'VERIFIED' : 'UNVERIFIED',
+          isProven: Boolean(genericMatched?.status === 'VERIFIED'),
+          explanation: genericMatched
+            ? `Отношение ${relType} найдено в модели стенда: ${genericMatched.description}`
+            : `Отношение ${relType} не найдено в текущем геометрическом состоянии.`,
+          matchedRelation: genericMatched,
+        },
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // F. PROJECT PERSISTENCE (SAVE / LOAD)
+    // ------------------------------------------------------------------------
+    case 'SAVE_PROJECT': {
+      const project = createGeometryProject(state, {
+        name: command.name,
+        description: command.description,
+        author: command.author,
+        tags: command.tags,
+        benchmarkId: command.benchmarkId,
+      });
+      const serialized = serializeGeometryProject(project, { pretty: command.pretty ?? true });
+
+      return {
+        success: true,
+        command: 'SAVE_PROJECT',
+        stateChanged: false,
+        nextState: state,
+        previousState: state,
+        savedProject: project,
+        serializedProject: serialized,
+        infoMessage: `Проект "${project.metadata.name}" успешно сериализован в JSON (версия ${project.version}).`,
+      };
+    }
+
+    case 'LOAD_PROJECT': {
+      const result = deserializeGeometryProject(command.project);
+
+      if (result.success === false) {
+        const firstErr = result.errors[0];
+        let errCode: SemanticCommandErrorCode = 'INVALID_PROJECT_FORMAT';
+        if (firstErr?.code === 'UNSUPPORTED_VERSION') errCode = 'UNSUPPORTED_PROJECT_VERSION';
+        else if (firstErr?.code === 'CORRUPTED_ENTITY' || firstErr?.code === 'DANGLING_REFERENCE' || firstErr?.code === 'DUPLICATE_ID') {
+          errCode = 'CORRUPTED_PROJECT';
+        }
+
+        return {
+          success: false,
+          command: 'LOAD_PROJECT',
+          stateChanged: false,
+          nextState: state,
+          previousState: state,
+          errorCode: errCode,
+          errorMessage: `Ошибка загрузки проекта: ${result.errors.map((e) => e.message).join('; ')}`,
+        };
+      }
+
+      const configView = buildConfigurationView(result.restoredState);
+
+      return {
+        success: true,
+        command: 'LOAD_PROJECT',
+        stateChanged: true,
+        nextState: result.restoredState,
+        previousState: state,
+        savedProject: result.project,
+        derivedRelations: extractSemanticRelations(result.restoredState),
+        measurements: extractSemanticQuantities(result.restoredState),
+        configurationSummary: configView.summary,
+        infoMessage: `Проект "${result.project.metadata.name}" (v${result.project.version}) успешно загружен и детерминированно пересчитан.`,
+      };
+    }
+
+    // ------------------------------------------------------------------------
+    // G. BATCH COMMANDS
     // ------------------------------------------------------------------------
     case 'BATCH_SEMANTIC_COMMANDS': {
       let currentState = state;

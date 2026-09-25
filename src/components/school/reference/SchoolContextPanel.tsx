@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { ContextualExplanationPayload } from './schoolKnowledgeTypes';
+import { useI18n } from '../../../i18n';
 import {
   BookOpen,
   Sparkles,
@@ -24,15 +25,17 @@ export const SchoolContextPanel: React.FC<SchoolContextPanelProps> = ({
   payload,
   onClearSelection,
 }) => {
+  const { t } = useI18n();
+
   if (!payload) {
     return (
       <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500 flex flex-col items-center justify-center text-center gap-2 min-h-[160px]">
         <BookOpen className="w-6 h-6 text-slate-400" />
         <div className="font-semibold text-slate-700 text-[13px]">
-          Школьный контекстный справочник
+          {t('school.reference.emptyTitle')}
         </div>
         <p className="text-[11px] max-w-xs text-slate-500">
-          Кликните по любому объекту на чертеже или выберите элемент в реестре ниже, чтобы открыть его определение, проверенные свойства и связанные теоремы.
+          {t('school.reference.emptyDesc')}
         </p>
       </div>
     );
@@ -69,8 +72,8 @@ export const SchoolContextPanel: React.FC<SchoolContextPanelProps> = ({
         {onClearSelection && (
           <button
             onClick={onClearSelection}
-            title="Закрыть справку"
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition"
+            title={t('common.close')}
+            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -81,7 +84,7 @@ export const SchoolContextPanel: React.FC<SchoolContextPanelProps> = ({
       <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-lg flex flex-col gap-1">
         <div className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
           <Info className="w-3.5 h-3.5 text-indigo-600" />
-          <span>1. Определение (Что это?)</span>
+          <span>{t('school.reference.defTitle')}</span>
         </div>
         <p className="text-[11px] text-slate-600 leading-relaxed pl-5">
           {payload.level1_identification.definition}
@@ -92,7 +95,7 @@ export const SchoolContextPanel: React.FC<SchoolContextPanelProps> = ({
       <div className="p-2.5 bg-sky-50/50 border border-sky-100 rounded-lg flex flex-col gap-1.5">
         <div className="text-[11px] font-bold text-sky-900 flex items-center gap-1.5">
           <CheckCircle2 className="w-3.5 h-3.5 text-sky-600" />
-          <span>2. Свойства на чертеже (Verified Facts)</span>
+          <span>{t('school.reference.propsTitle')}</span>
         </div>
         <ul className="flex flex-col gap-1 pl-5 list-disc text-[11px] text-slate-700">
           {payload.level2_properties.items.map((prop, idx) => (
@@ -108,14 +111,14 @@ export const SchoolContextPanel: React.FC<SchoolContextPanelProps> = ({
         <div className="p-2.5 bg-amber-50/40 border border-amber-100 rounded-lg flex flex-col gap-1">
           <div className="text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
             <GitBranch className="w-3.5 h-3.5 text-amber-600" />
-            <span>3. Происхождение и контекст построения</span>
+            <span>{t('school.reference.provTitle')}</span>
           </div>
           <p className="text-[11px] text-slate-700 leading-relaxed pl-5">
             {payload.level3_provenance.description}
           </p>
           {payload.level3_provenance.hasProvenance && (
             <div className="mt-1 pt-1 border-t border-amber-100 text-[10px] text-amber-800/90 italic pl-5">
-              📌 История построения (provenance) фиксирует шаги создания, а геометрические свойства подтверждены верификацией.
+              {t('school.reference.provNote')}
             </div>
           )}
         </div>
@@ -126,7 +129,7 @@ export const SchoolContextPanel: React.FC<SchoolContextPanelProps> = ({
         <div className="p-2.5 bg-emerald-50/70 border border-emerald-200 rounded-lg flex flex-col gap-1.5">
           <div className="text-[11px] font-bold text-emerald-950 flex items-center gap-1.5">
             <Sigma className="w-3.5 h-3.5 text-emerald-700" />
-            <span>4. Теорема / Формула: {payload.level4_theorem.name}</span>
+            <span>{t('school.reference.thmTitle')} {payload.level4_theorem.name}</span>
           </div>
           <p className="text-[11px] text-emerald-900 leading-relaxed pl-5">
             {payload.level4_theorem.statement}
@@ -141,3 +144,4 @@ export const SchoolContextPanel: React.FC<SchoolContextPanelProps> = ({
     </div>
   );
 };
+

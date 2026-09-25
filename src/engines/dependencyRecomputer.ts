@@ -278,6 +278,7 @@ export function recomputeDependentGeometry(state: FullGeometryState): FullGeomet
           name: `X${i + 1}`,
           x: int.x,
           y: int.y,
+          onCircle: int.targetType === 'circle',
           role: 'auxiliary',
           parentIds: [primaryLineId, int.targetId],
           provenance: {
@@ -424,6 +425,7 @@ export function recomputeDependentGeometry(state: FullGeometryState): FullGeomet
           name: `X${i + 1}`,
           x: int.x,
           y: int.y,
+          onCircle: int.targetType === 'circle',
           role: 'auxiliary',
           parentIds: [primaryLineId, int.targetId],
           provenance: {
@@ -452,22 +454,22 @@ export function recomputeDependentGeometry(state: FullGeometryState): FullGeomet
       const circInts = intersectCircleCircle(ptA, distAB, ptB, distAB, GEOMETRY_EPSILON);
       if (circInts.length < 2) continue;
 
-      const cAId = `circle_pbis_${groupId}_A`;
+      const cAId = nextCircles[`circ_pb_${groupId}_A`] ? `circ_pb_${groupId}_A` : `circle_pbis_${groupId}_A`;
       if (nextCircles[cAId]) {
         nextCircles[cAId] = { ...nextCircles[cAId], centerId: pAId, radius: distAB };
       }
 
-      const cBId = `circle_pbis_${groupId}_B`;
+      const cBId = nextCircles[`circ_pb_${groupId}_B`] ? `circ_pb_${groupId}_B` : `circle_pbis_${groupId}_B`;
       if (nextCircles[cBId]) {
         nextCircles[cBId] = { ...nextCircles[cBId], centerId: pBId, radius: distAB };
       }
 
-      const p1Id = `pt_pbis_${groupId}_1`;
+      const p1Id = nextPoints[`pt_pb_${groupId}_1`] ? `pt_pb_${groupId}_1` : `pt_pbis_${groupId}_1`;
       if (nextPoints[p1Id]) {
         nextPoints[p1Id] = { ...nextPoints[p1Id], x: circInts[0].x, y: circInts[0].y };
       }
 
-      const p2Id = `pt_pbis_${groupId}_2`;
+      const p2Id = nextPoints[`pt_pb_${groupId}_2`] ? `pt_pb_${groupId}_2` : `pt_pbis_${groupId}_2`;
       if (nextPoints[p2Id]) {
         nextPoints[p2Id] = { ...nextPoints[p2Id], x: circInts[1].x, y: circInts[1].y };
       }
@@ -606,6 +608,7 @@ export function recomputeDependentGeometry(state: FullGeometryState): FullGeomet
           name: `X${i + 1}`,
           x: int.x,
           y: int.y,
+          onCircle: int.targetType === 'circle',
           role: 'auxiliary',
           parentIds: [primaryLineId, int.targetId],
           provenance: {

@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { SchoolTool, ToolState } from './schoolTypes';
+import { useI18n } from '../../i18n';
 import {
   MousePointer,
   Dot,
@@ -33,97 +34,23 @@ interface SchoolToolbarProps {
   scale?: number;
 }
 
-const TOOLS: {
+const TOOL_CONFIGS: {
   id: SchoolTool;
-  label: string;
   shortKey: string;
   icon: React.ComponentType<{ className?: string }>;
-  description: string;
 }[] = [
-  {
-    id: 'select',
-    label: 'Выделение',
-    shortKey: 'V',
-    icon: MousePointer,
-    description: 'Выделение и перемещение точек',
-  },
-  {
-    id: 'point',
-    label: 'Точка',
-    shortKey: 'P',
-    icon: Dot,
-    description: 'Поставить точку на плоскости или окружности',
-  },
-  {
-    id: 'segment',
-    label: 'Отрезок',
-    shortKey: 'S',
-    icon: Minus,
-    description: 'Отрезок между двумя точками',
-  },
-  {
-    id: 'line',
-    label: 'Прямая',
-    shortKey: 'L',
-    icon: MoveHorizontal,
-    description: 'Бесконечная прямая через две точки',
-  },
-  {
-    id: 'circle',
-    label: 'Окружность',
-    shortKey: 'C',
-    icon: Circle,
-    description: 'Окружность по центру и точке радиуса',
-  },
-  {
-    id: 'ruler',
-    label: 'Линейка',
-    shortKey: 'R',
-    icon: Ruler,
-    description: 'Измерение расстояния между точками (без создания объектов)',
-  },
-  {
-    id: 'compass',
-    label: 'Циркуль',
-    shortKey: 'K',
-    icon: Compass,
-    description: 'Перенос радиуса / построение окружности циркулем',
-  },
-  {
-    id: 'perp_bisector',
-    label: 'Серед. перпендикуляр',
-    shortKey: 'B',
-    icon: Divide,
-    description: 'Серединный перпендикуляр к отрезку (классическое построение)',
-  },
-  {
-    id: 'angle_bisector',
-    label: 'Биссектриса угла',
-    shortKey: 'G',
-    icon: GitFork,
-    description: 'Классическая внутренняя биссектриса угла по выбранной вершине',
-  },
-  {
-    id: 'perpendicular',
-    label: 'Перпендикуляр к L',
-    shortKey: 'T',
-    icon: CornerDownRight,
-    description: 'Классический перпендикуляр к прямой L через точку P (L → P)',
-  },
-  {
-    id: 'parallel',
-    label: 'Параллель к L',
-    shortKey: 'X',
-    icon: Equal,
-    description: 'Классическая параллельная прямая через точку P к прямой L (L → P)',
-  },
-  {
-    id: 'erase',
-    label: 'Ластик',
-    shortKey: 'E',
-    icon: Eraser,
-    description: 'Удаление построенного объекта',
-  },
+  { id: 'select', shortKey: 'V', icon: MousePointer },
+  { id: 'point', shortKey: 'P', icon: Dot },
+  { id: 'segment', shortKey: 'S', icon: Minus },
+  { id: 'line', shortKey: 'L', icon: MoveHorizontal },
+  { id: 'circle', shortKey: 'C', icon: Circle },
+  { id: 'ruler', shortKey: 'R', icon: Ruler },
+  { id: 'compass', shortKey: 'K', icon: Compass },
+  { id: 'perp_bisector', shortKey: 'B', icon: Divide },
+  { id: 'angle_bisector', shortKey: 'G', icon: GitFork },
+  { id: 'perpendicular', shortKey: 'T', icon: CornerDownRight },
+  { id: 'parallel', shortKey: 'X', icon: Equal },
+  { id: 'erase', shortKey: 'E', icon: Eraser },
 ];
 
 export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
@@ -137,64 +64,65 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
   canUndo = false,
   scale = 1.0,
 }) => {
+  const { t } = useI18n();
   const isMultiStepActive = toolState.status !== 'IDLE';
 
   const getStepHint = (): string => {
     switch (activeTool) {
       case 'select':
-        return 'Кликните и перетащите любую точку чертежа';
+        return t('school.hint.select');
       case 'point':
-        return 'Кликните на плоскости или окружности для создания точки';
+        return t('school.hint.point');
       case 'segment':
         return toolState.status === 'IDLE'
-          ? 'Кликните первую точку отрезка'
-          : 'Кликните вторую точку отрезка (ESC для отмены)';
+          ? t('school.hint.segment.step1')
+          : t('school.hint.segment.step2');
       case 'line':
         return toolState.status === 'IDLE'
-          ? 'Кликните первую точку прямой'
-          : 'Кликните вторую точку прямой (ESC для отмены)';
+          ? t('school.hint.line.step1')
+          : t('school.hint.line.step2');
       case 'circle':
         return toolState.status === 'IDLE'
-          ? 'Кликните точку центра окружности'
-          : 'Кликните точку на радиусе (ESC для отмены)';
+          ? t('school.hint.circle.step1')
+          : t('school.hint.circle.step2');
       case 'ruler':
         return toolState.status === 'IDLE'
-          ? 'Кликните первую точку для измерения'
-          : 'Кликните вторую точку (ESC для отмены)';
+          ? t('school.hint.ruler.step1')
+          : t('school.hint.ruler.step2');
       case 'compass':
         return toolState.status === 'IDLE'
-          ? 'Кликните центр для ножки циркуля'
-          : 'Задайте раствор циркуля вторым кликом (ESC для отмены)';
+          ? t('school.hint.compass.step1')
+          : t('school.hint.compass.step2');
       case 'perp_bisector':
         return toolState.status === 'IDLE'
-          ? 'Кликните первую точку отрезка (или существующий отрезок)'
-          : 'Кликните вторую точку отрезка для построения перпендикуляра (ESC для отмены)';
+          ? t('school.hint.perp_bisector.step1')
+          : t('school.hint.perp_bisector.step2');
       case 'angle_bisector':
         if (toolState.angleBisectorTargets && toolState.angleBisectorTargets.length === 0) {
-          return 'Нет подходящих вершин для построения биссектрисы';
+          return t('school.hint.angle_bisector.no_targets');
         }
         if (toolState.hoverSmartTargetId && toolState.angleBisectorTargets) {
           const target = toolState.angleBisectorTargets.find(
-            (t) => t.targetId === toolState.hoverSmartTargetId
+            (tgt) => tgt.targetId === toolState.hoverSmartTargetId
           );
           if (target) {
-            return `Построить биссектрису угла ${target.vertexName}`;
+            return t('school.hint.angle_bisector.construct', { vertex: target.vertexName });
           }
         }
         if (toolState.lastActionMessage) {
           return toolState.lastActionMessage;
         }
-        return 'Выберите вершину угла — доступные вершины подсвечены';
+        return t('school.hint.angle_bisector.select');
       case 'perpendicular':
         return toolState.status === 'IDLE'
-          ? 'Шаг 1/2: Выберите прямую или отрезок L'
-          : 'Шаг 2/2: Кликните точку P для проведения перпендикуляра (ESC для отмены)';
+          ? t('school.hint.perpendicular.step1')
+          : t('school.hint.perpendicular.step2');
       case 'parallel':
         return toolState.status === 'IDLE'
-          ? 'Шаг 1/2: Выберите прямую или отрезок L'
-          : 'Шаг 2/2: Кликните точку P для проведения параллельной прямой (ESC для отмены)';
+          ? t('school.hint.parallel.step1')
+          : t('school.hint.parallel.step2');
       case 'erase':
-        return 'Ластик: кликните по объекту, чтобы удалить его. ESC — отмена.';
+        return t('school.hint.erase');
       default:
         return '';
     }
@@ -208,15 +136,17 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
       {/* Upper Bar: Instruments Palette + Geometry Operations */}
       <div className="flex flex-wrap items-center justify-between gap-1.5">
         <div className="flex flex-wrap items-center gap-1">
-          {TOOLS.map((t) => {
-            const IconComponent = t.icon;
-            const isSelected = activeTool === t.id;
+          {TOOL_CONFIGS.map((toolCfg) => {
+            const IconComponent = toolCfg.icon;
+            const isSelected = activeTool === toolCfg.id;
+            const label = t(`school.tool.${toolCfg.id}`);
+            const desc = t(`school.tool.${toolCfg.id}.desc`);
             return (
               <button
-                key={t.id}
-                id={`schoolTool_${t.id}`}
-                onClick={() => onChangeTool(t.id)}
-                title={`${t.label} (${t.description})`}
+                key={toolCfg.id}
+                id={`schoolTool_${toolCfg.id}`}
+                onClick={() => onChangeTool(toolCfg.id)}
+                title={`${label} (${desc})`}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   isSelected
                     ? 'bg-indigo-600 text-white shadow-xs'
@@ -224,7 +154,7 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
                 }`}
               >
                 <IconComponent className="w-3.5 h-3.5" />
-                <span>{t.label}</span>
+                <span>{label}</span>
               </button>
             );
           })}
@@ -239,8 +169,8 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
             disabled={!canUndo}
             title={
               canUndo
-                ? 'Отменить последнее действие (Ctrl+Z)'
-                : 'Нет действий для отмены'
+                ? t('common.undoTooltip')
+                : t('common.noUndo')
             }
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border ${
               canUndo
@@ -249,18 +179,18 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
             }`}
           >
             <Undo2 className="w-3.5 h-3.5" />
-            <span>Отменить</span>
+            <span>{t('common.undo')}</span>
           </button>
 
           {/* Clear user constructions button */}
           <button
             id="clearConstructionsBtn"
             onClick={onClearConstructions}
-            title="Удалить все пользовательские построения (оставив базовый треугольник и окружность)"
+            title={t('school.action.clearConstructionsTooltip')}
             className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200 transition cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Очистить чертёж</span>
+            <span>{t('school.action.clearConstructions')}</span>
           </button>
         </div>
       </div>
@@ -291,15 +221,15 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
             >
               <Ruler className="w-3.5 h-3.5 text-amber-600" />
               <span>
-                L = {(toolState.rulerMeasurement.distanceModel * scale).toFixed(1)} мм{' '}
+                L = {(toolState.rulerMeasurement.distanceModel * scale).toFixed(1)} {t('common.mm')}{' '}
                 <span className="text-[10px] text-amber-600 font-normal">
-                  ({Math.round(toolState.rulerMeasurement.distanceModel)} px)
+                  ({Math.round(toolState.rulerMeasurement.distanceModel)} {t('common.px')})
                 </span>
               </span>
               <button
                 id="clearRulerMeasurementBtn"
                 onClick={onClearRuler}
-                title="Закрыть измерение"
+                title={t('school.action.closeMeasurement')}
                 className="hover:text-amber-700 ml-1 cursor-pointer"
               >
                 <X className="w-3 h-3" />
@@ -315,7 +245,7 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
               className="flex items-center gap-1 px-2 py-0.5 bg-white hover:bg-slate-100 text-rose-600 border border-rose-200 rounded text-xs font-semibold shadow-2xs transition cursor-pointer"
             >
               <X className="w-3 h-3" />
-              <span>Отмена (ESC)</span>
+              <span>{t('common.cancelEsc')}</span>
             </button>
           )}
         </div>
@@ -323,3 +253,4 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
     </div>
   );
 };
+

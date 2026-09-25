@@ -128,11 +128,13 @@ Analytical verification of 7 canonical Euclidean rules (`src/engines/research/ca
 | Component | Status | Details |
 | :--- | :--- | :--- |
 | **Geometry Core & DAG** | `IMPLEMENTED & VERIFIED` | Closed-form analytical propagations, 0 external math libraries |
+| **Geometry Project Persistence** | `IMPLEMENTED & VERIFIED` | Versioned JSON format (`GeometryProjectV1`), transaction-safe Save/Open |
+| **AAM Language Gateway** | `IMPLEMENTED & VERIFIED` | Natural language intent extraction & execution across RU, UK, and EN |
 | **School Canvas & Toolbar** | `IMPLEMENTED & VERIFIED` | Point dragging, construction tools, object inventory |
-| **Semantic Interface (20 commands)**| `IMPLEMENTED & VERIFIED` | Complete typed schema, error codes, and invariance tests |
+| **Semantic Interface (23 commands)**| `IMPLEMENTED & VERIFIED` | Complete typed schema, error codes, and invariance tests |
 | **Canonical Rules Base (7 rules)** | `IMPLEMENTED & VERIFIED` | Precondition evaluators for Thales, chords, bisectors, tangents |
 | **Configuration Passport (S-01..S-03)**| `IMPLEMENTED & VERIFIED` | Read-only projection of relations, constructions, and LaTeX values |
-| **Natural Language Adapter** | `IMPLEMENTED & VERIFIED` | Deterministic parsing for common Russian/English geometry phrases |
+| **Multilingual UI (RU/UK/EN)** | `IMPLEMENTED & VERIFIED` | Full localization with persistent language switcher in header |
 | **Research Mode Experiments** | `IMPLEMENTED & VERIFIED` | Parameter sweeps and invariant constancy checks |
 | **Automated Lemma Discovery** | `PLANNED` | Current version verifies facts against rules; unguided synthesis is planned |
 | **3D Solid Geometry (Стереометрия)**| `OUT OF SCOPE` | The Stand is dedicated exclusively to Euclidean 2D planimetry |
@@ -141,7 +143,17 @@ Analytical verification of 7 canonical Euclidean rules (`src/engines/research/ca
 
 ---
 
-## 6. Quick Start
+## 6. Projects & State Persistence
+
+The Stand supports persistent saving and reloading of geometry sessions without losing parametric flexibility:
+- **Save Project (`.json`)**: Exports the active `GeometryState`, Construction DAG provenance, and model configuration into a structured JSON file conforming to `GeometryProjectV1`.
+- **Open Project (`.json`)**: Validates the schema, restores mathematical entities, and deterministically recomputes the entire Construction DAG, Configuration Passport, and verified theorem facts.
+- **Transaction Safety**: Malformed or inconsistent project files are rejected without altering the active workspace.
+- **AI Agent Persistence**: External agents can use `SAVE_PROJECT` and `LOAD_PROJECT` commands via the Universal Semantic Tool Interface.
+
+---
+
+## 7. Quick Start
 
 ### Prerequisites
 - Node.js $\ge$ 20.x
@@ -158,18 +170,20 @@ Open `http://localhost:3000` in your web browser.
 
 ---
 
-## 7. Automated Testing & Verification Baseline
+## 8. Automated Testing & Verification Baseline
 
-The repository includes **21 individual test scripts** defined in `package.json`.  
-Running `npm run test:all` executes the **20 main test suites** sequentially:
+The repository includes **23 individual test scripts** defined in `package.json`.  
+Running `npm run test:all` executes all test suites sequentially:
 
 ```bash
-# Complete regression test suite (20 suites)
+# Complete regression test suite (22 suites)
 npm run test:all
 
 # Individual key suites:
 npm run test:kernel          # 74 autonomous kernel derivation tests
 npm run test:env             # 18 agent environment contract tests
+npm run test:project         # 30 project persistence & round-trip tests
+npm run test:aam             # 20 AAM Gateway benchmark tests
 npm run test:packet1         # 7 Triangle-Circle & Thales invariant tests
 npm run test:packet2         # 7 Fundamentals, Bisectors & Tangent tests
 npm run test:agent-semantic  # 16 Semantic Command Interface tests
@@ -182,18 +196,23 @@ npm run build
 ```
 
 **Actual Verified Baseline on Current Codebase:**
-- `npm run test:all`: **20/20 suites passed (100% PASS)**
+- `npm run test:all`: **22/22 suites passed (100% PASS)**
+- `npm run test:project`: **30/30 tests passed (100% PASS)**
 - `npm run lint`: **0 errors (clean TypeScript compilation)**
 - `npm run build`: **Successful production bundle build (Vite)**
 
 ---
 
-## 8. Documentation Index
+## 9. Documentation Index
 
 Comprehensive technical documentation is available in `docs/`:
 
 - [docs/OVERVIEW.md](./docs/OVERVIEW.md) — Mission, target audiences, and feature pillars.
-- [docs/SEMANTIC_INTERFACE.md](./docs/SEMANTIC_INTERFACE.md) — 60-second Agent Quickstart, real JSON protocols, and all 20 commands.
+- [docs/GEOMETRY_PROJECT.md](./docs/GEOMETRY_PROJECT.md) — Geometry Project persistence model, schema versioning, and validation.
+- [docs/RELEASE_V2.md](./docs/RELEASE_V2.md) — Release notes for Version 2.1.0.
+- [docs/GITHUB_UPDATE.md](./docs/GITHUB_UPDATE.md) — Step-by-step checklist for updating GitHub repository.
+- [docs/GOOGLE_AI_STUDIO_UPDATE.md](./docs/GOOGLE_AI_STUDIO_UPDATE.md) — Deployment and synchronization guide for Google AI Studio.
+- [docs/SEMANTIC_INTERFACE.md](./docs/SEMANTIC_INTERFACE.md) — 60-second Agent Quickstart, real JSON protocols, and all 23 commands.
 - [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — Kernel knowledge graph, Navigator, and consistency engines.
 - [docs/GEOMETRY_MODEL.md](./docs/GEOMETRY_MODEL.md) — `GeometryState` structure, Construction DAG, and analytical recomputation.
 - [docs/VERIFICATION.md](./docs/VERIFICATION.md) — Epistemic tiers, Vanishing Property, and 7 canonical Euclidean rules.
@@ -203,7 +222,7 @@ Comprehensive technical documentation is available in `docs/`:
 - [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md) — Developer guidelines for adding tools and canonical rules.
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — Contributing guidelines and architectural rules.
 - [SECURITY.md](./SECURITY.md) — Security policy and vulnerability disclosure channels.
-- [CHANGELOG.md](./CHANGELOG.md) — Version 2.0.0 release notes.
+- [CHANGELOG.md](./CHANGELOG.md) — Version 2.1.0 changelog.
 
 ---
 

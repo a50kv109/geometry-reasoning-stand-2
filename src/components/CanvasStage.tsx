@@ -11,6 +11,7 @@ import {
 } from '../engines/geometryState';
 import { RotateCw, RotateCcw, Compass, CheckCircle2 } from 'lucide-react';
 import { SchoolTool, SchoolPreviewData, RulerMeasurement } from './school/schoolTypes';
+import { useI18n } from '../i18n';
 
 interface CanvasStageProps {
   pointsU: { A: number; B: number; C: number };
@@ -163,6 +164,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   onDragStart,
   onDragCommit,
 }) => {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [draggingMode, setDraggingMode] = useState<'vertex' | 'rotate' | 'schoolPoint' | null>(null);
@@ -1442,13 +1444,13 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           <div className="flex items-center gap-1.5 text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
             <span className="font-semibold text-slate-900">
-              R = {(propR * scale).toFixed(1)} мм{' '}
-              <span className="font-mono text-[10px] text-slate-400 font-normal">({Math.round(propR)} px)</span>
+              R = {(propR * scale).toFixed(1)} {t('common.mm')}{' '}
+              <span className="font-mono text-[10px] text-slate-400 font-normal">({Math.round(propR)} {t('common.px')})</span>
             </span>
             <span className="text-slate-300">|</span>
             <span className="font-semibold text-slate-900">
-              D = {(2 * propR * scale).toFixed(1)} мм{' '}
-              <span className="font-mono text-[10px] text-slate-400 font-normal">({Math.round(2 * propR)} px)</span>
+              D = {(2 * propR * scale).toFixed(1)} {t('common.mm')}{' '}
+              <span className="font-mono text-[10px] text-slate-400 font-normal">({Math.round(2 * propR)} {t('common.px')})</span>
             </span>
             <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1 py-0.5 rounded border border-indigo-100 font-mono">
               D = 2R
@@ -1458,14 +1460,14 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           {/* Educational Scale Badge */}
           <div
             id="educationalScaleBadge"
-            title="Условный масштаб модели: 1 экранный пиксель соответствует 1 условному миллиметру"
+            title={t('canvas.scaleTooltip')}
             className="flex items-center gap-1.5 text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 shadow-2xs"
           >
-            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">МАСШТАБ:</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">{t('canvas.scaleLabel')}:</span>
             <span className="font-bold text-indigo-700 font-mono text-xs">
-              1 px = {scale} мм
+              1 px = {scale} {t('common.mm')}
             </span>
-            <span className="text-[10px] text-slate-500 font-medium">(учебный)</span>
+            <span className="text-[10px] text-slate-500 font-medium">({t('canvas.scaleEducational')})</span>
 
             {/* Optional Scale Selector (1:0.5, 1:1, 1:2) */}
             {onChangeScale && (
@@ -1474,7 +1476,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
                   <button
                     key={sVal}
                     onClick={() => onChangeScale(sVal)}
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition ${
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition cursor-pointer ${
                       scale === sVal
                         ? 'bg-indigo-600 text-white shadow-2xs'
                         : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200'
@@ -1494,60 +1496,60 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
             <button
               id="scaleModeDegreesBtn"
               onClick={() => onChangeScaleMode('degrees')}
-              className={`px-2 py-1 rounded-md text-[11px] font-bold transition ${
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
                 scaleMode === 'degrees'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              ГРАДУСЫ (°)
+              {t('canvas.modeDegrees')}
             </button>
             <button
               id="scaleModeRadiansBtn"
               onClick={() => onChangeScaleMode('radians')}
-              className={`px-2 py-1 rounded-md text-[11px] font-bold transition ${
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
                 scaleMode === 'radians'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              РАДИАНЫ (рад)
+              {t('canvas.modeRadians')}
             </button>
             <button
               id="scaleModeFractionsBtn"
               onClick={() => onChangeScaleMode('fractions')}
-              className={`px-2 py-1 rounded-md text-[11px] font-bold transition ${
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
                 scaleMode === 'fractions'
                   ? 'bg-purple-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              ДОЛИ КРУГА
+              {t('canvas.modeFractions')}
             </button>
           </div>
 
           <button
             id="toggleProtractorBtn"
             onClick={() => setShowProtractor(!showProtractor)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition cursor-pointer ${
               showProtractor
                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-xs'
                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            Шкала {showProtractor ? 'ON' : 'OFF'}
+            {t('canvas.protractor')} {showProtractor ? 'ON' : 'OFF'}
           </button>
 
           <button
             id="toggleRadiiBtn"
             onClick={() => setShowRadii(!showRadii)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition cursor-pointer ${
               showRadii
                 ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-xs'
                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
             }`}
           >
-            Радиусы {showRadii ? 'ON' : 'OFF'}
+            {t('canvas.radii')} {showRadii ? 'ON' : 'OFF'}
           </button>
         </div>
       </div>
@@ -1586,13 +1588,17 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center animate-bounce">
             <div className="bg-emerald-600 text-white font-black px-4 py-1.5 rounded-xl shadow-lg border-2 border-emerald-300 text-xs flex items-center gap-2">
               <span className="text-base">🎯</span>
-              <span>1 РАДИАН! ДЛИНА ВЫБРАННОЙ ДУГИ = РАДИУС</span>
+              <span>{t('canvas.oneRadianTitle')}</span>
               <span className="bg-emerald-800/80 px-2 py-0.5 rounded text-[11px] font-mono">
-                s = R = {(propR * scale).toFixed(1)} мм
+                s = R = {(propR * scale).toFixed(1)} {t('common.mm')}
               </span>
             </div>
             <span className="text-[10px] text-emerald-950 font-bold bg-emerald-100/95 px-3 py-0.5 rounded-full mt-1 border border-emerald-300 shadow-xs">
-              Угол θ = {arcDegAB.toFixed(1)}° ≈ {arcRadAB.toFixed(2)} рад • Отношение s / R = {arcRadAB.toFixed(2)}
+              {t('canvas.oneRadianDetail', {
+                deg: arcDegAB.toFixed(1),
+                rad: arcRadAB.toFixed(2),
+                ratio: arcRadAB.toFixed(2),
+              })}
             </span>
           </div>
         )}
@@ -1602,10 +1608,14 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           <div className="absolute top-14 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center">
             <div className="bg-indigo-600 text-white font-black px-4 py-1.5 rounded-xl shadow-lg border-2 border-indigo-300 text-xs flex items-center gap-2">
               <span className="text-base">⭕</span>
-              <span>ОТНОШЕНИЕ π = C / D ≈ 3.14159</span>
+              <span>{t('canvas.piRatioTitle')}</span>
             </div>
             <span className="text-[10px] text-indigo-950 font-bold bg-indigo-100/95 px-3 py-0.5 rounded-full mt-1 border border-indigo-300 shadow-xs">
-              Длина всей окружности C ≈ {(2 * Math.PI * propR * scale).toFixed(1)} мм в ~3.14 раза больше диаметра D = {(2 * propR * scale).toFixed(1)} мм
+              {t('canvas.piRatioDetail', {
+                c: (2 * Math.PI * propR * scale).toFixed(1),
+                mm: t('common.mm'),
+                d: (2 * propR * scale).toFixed(1),
+              })}
             </span>
           </div>
         )}
@@ -1622,16 +1632,16 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
                 : 'bg-indigo-50/95 text-indigo-800 border-indigo-200'
             }`}
           >
-            {engineResult.classification === 'right' && '📐 Центр O лежит на стороне (диаметр = 2R)'}
-            {engineResult.classification === 'acute' && '🔵 Центр O строго внутри треугольника'}
-            {engineResult.classification === 'obtuse' && '🟠 Центр O находится снаружи'}
+            {engineResult.classification === 'right' && t('canvas.centerRight')}
+            {engineResult.classification === 'acute' && t('canvas.centerAcute')}
+            {engineResult.classification === 'obtuse' && t('canvas.centerObtuse')}
           </div>
         </div>
 
         {/* Top-Right Hint: Rotate Disc */}
         <div className="absolute top-3 right-3 pointer-events-none hidden sm:flex items-center gap-1.5 text-[11px] text-slate-500 bg-white/90 border border-slate-200 px-2.5 py-1 rounded-lg shadow-xs font-medium">
           <Compass className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Тяните маркер ↻ по внешнему кругу</span>
+          <span>{t('canvas.rotateDiscHint')}</span>
         </div>
 
         {/* Floating Arc Pills (Labels along circumference) */}
@@ -1665,9 +1675,9 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               const arcFractionData = formatArcFraction(arc.fraction);
               const displayText =
                 scaleMode === 'radians'
-                  ? `${(arc.fraction * 2 * Math.PI).toFixed(2)} рад (${Math.round(arc.deg)}°)`
+                  ? `${(arc.fraction * 2 * Math.PI).toFixed(2)} ${t('canvas.radShort')} (${Math.round(arc.deg)}°)`
                   : scaleMode === 'fractions'
-                  ? `${arcFractionData.fractionStr} круга (${Math.round(arc.deg)}°)`
+                  ? `${arcFractionData.fractionStr} ${t('canvas.circleShort')} (${Math.round(arc.deg)}°)`
                   : `${Math.round(arc.deg)}° (${arcFractionData.fractionStr})`;
 
               return (
@@ -1707,7 +1717,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
               <Compass className="w-3.5 h-3.5 text-indigo-600" />
-              Вращение:
+              {t('canvas.rotation')}:
             </span>
             <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
               {rotationDeg}°
@@ -1716,16 +1726,16 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
             <button
               id="rotateCcwBtn"
               onClick={() => onChangeRotation((rotationDeg - 15 + 360) % 360)}
-              title="Повернуть против часовой стрелки на 15°"
-              className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded border border-slate-200 text-xs flex items-center gap-1 font-medium transition"
+              title={t('canvas.rotateCcwTooltip')}
+              className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded border border-slate-200 text-xs flex items-center gap-1 font-medium transition cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" /> -15°
             </button>
             <button
               id="rotateCwBtn"
               onClick={() => onChangeRotation((rotationDeg + 15) % 360)}
-              title="Повернуть по часовой стрелке на 15°"
-              className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded border border-slate-200 text-xs flex items-center gap-1 font-medium transition"
+              title={t('canvas.rotateCwTooltip')}
+              className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded border border-slate-200 text-xs flex items-center gap-1 font-medium transition cursor-pointer"
             >
               <RotateCw className="w-3 h-3" /> +15°
             </button>
@@ -1733,9 +1743,9 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               <button
                 id="resetRotationBtn"
                 onClick={() => onChangeRotation(0)}
-                className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded border border-indigo-200 text-xs font-semibold transition"
+                className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded border border-indigo-200 text-xs font-semibold transition cursor-pointer"
               >
-                Сброс (0°)
+                {t('canvas.reset0')}
               </button>
             )}
           </div>
@@ -1759,10 +1769,10 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span>
-              <strong>ROTATION:</strong> Форма: <span className="text-emerald-700 font-semibold">без изменений</span> • Углы: <span className="text-emerald-700 font-semibold">без изменений</span> • Дуги: <span className="text-emerald-700 font-semibold">без изменений</span> • Ориентация: <span className="text-indigo-700 font-semibold">{rotationDeg}°</span>
+              <strong>ROTATION:</strong> {t('canvas.rotationNotice', { deg: rotationDeg })}
             </span>
           </div>
-          <span className="text-[10px] text-slate-400 font-medium">Поверните диск для удобного доступа к вершинам</span>
+          <span className="text-[10px] text-slate-400 font-medium">{t('canvas.rotationHint')}</span>
         </div>
       </div>
     </div>

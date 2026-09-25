@@ -32,7 +32,12 @@ export type SemanticCommandType =
   | 'GET_RELATIONS'
   | 'GET_MEASUREMENTS'
   | 'GET_VERIFIED_FACTS'
-  // E. Batch
+  // E. Epistemic Verification
+  | 'VERIFY_RELATION'
+  // F. Project Persistence
+  | 'SAVE_PROJECT'
+  | 'LOAD_PROJECT'
+  // G. Batch
   | 'BATCH_SEMANTIC_COMMANDS';
 
 export type SemanticCommandErrorCode =
@@ -47,6 +52,9 @@ export type SemanticCommandErrorCode =
   | 'INSUFFICIENT_ANGLES'
   | 'PRECONDITION_FAILED'
   | 'BASE_OBJECT_IMMUTABLE'
+  | 'INVALID_PROJECT_FORMAT'
+  | 'UNSUPPORTED_PROJECT_VERSION'
+  | 'CORRUPTED_PROJECT'
   | 'UNKNOWN_ERROR';
 
 // --- Individual Command Payloads ---
@@ -174,6 +182,40 @@ export interface GetVerifiedFactsPayload {
   command: 'GET_VERIFIED_FACTS';
 }
 
+export interface VerifyRelationPayload {
+  command: 'VERIFY_RELATION';
+  relation:
+    | 'PERPENDICULAR'
+    | 'PARALLEL'
+    | 'ANGLE_BISECTOR'
+    | 'PERPENDICULAR_BISECTOR'
+    | 'DIAMETER'
+    | 'CHORD'
+    | 'POINT_ON_CIRCLE'
+    | 'THALES_INSCRIBED_RIGHT_ANGLE'
+    | 'TANGENT'
+    | string;
+  subject?: string;
+  reference?: string;
+  target?: string;
+  points?: string[];
+}
+
+export interface SaveProjectPayload {
+  command: 'SAVE_PROJECT';
+  name?: string;
+  description?: string;
+  author?: string;
+  tags?: string[];
+  benchmarkId?: string;
+  pretty?: boolean;
+}
+
+export interface LoadProjectPayload {
+  command: 'LOAD_PROJECT';
+  project: unknown; // JSON string or object
+}
+
 export interface BatchSemanticCommandsPayload {
   command: 'BATCH_SEMANTIC_COMMANDS';
   commands: SemanticCommand[];
@@ -198,6 +240,9 @@ export type SemanticCommand =
   | GetRelationsPayload
   | GetMeasurementsPayload
   | GetVerifiedFactsPayload
+  | VerifyRelationPayload
+  | SaveProjectPayload
+  | LoadProjectPayload
   | BatchSemanticCommandsPayload;
 
 // --- Command Execution Structured Result Protocol ---
@@ -207,6 +252,18 @@ export interface SemanticEntitySummary {
   readonly kind: 'point' | 'segment' | 'line' | 'circle';
   readonly name?: string;
   readonly role?: 'primary' | 'auxiliary';
+}
+
+export interface SemanticVerificationReport {
+  readonly relation: string;
+  readonly status: 'VERIFIED' | 'REFUTED' | 'UNVERIFIED';
+  readonly isProven: boolean;
+  readonly explanation: string;
+  readonly subjectId?: string;
+  readonly referenceId?: string;
+  readonly matchedRelation?: SemanticRelation;
+  readonly matchedFact?: ConfigurationEpistemicEntry;
+  readonly mathematicalCheck?: Record<string, unknown>;
 }
 
 export interface SemanticCommandResult {
@@ -226,4 +283,7 @@ export interface SemanticCommandResult {
   readonly configurationView?: GeometryConfigurationView;
   readonly appliedParameters?: Record<string, unknown>;
   readonly infoMessage?: string;
+  readonly verification?: SemanticVerificationReport;
+  readonly savedProject?: unknown;
+  readonly serializedProject?: string;
 }

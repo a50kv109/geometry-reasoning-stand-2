@@ -4,6 +4,7 @@
 import React, { useMemo } from 'react';
 import { FullGeometryState } from '../../engines/geometryState';
 import { SchoolTool, RulerMeasurement } from './schoolTypes';
+import { useI18n } from '../../i18n';
 import {
   Dot,
   Minus,
@@ -38,6 +39,7 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
   selectedEntityId,
   onSelectEntity,
 }) => {
+  const { t } = useI18n();
   const pointsList = Object.values(geometryState.points);
   const segmentsList = Object.values(geometryState.segments);
   const linesList = Object.values(geometryState.lines);
@@ -49,84 +51,11 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
     return resolveSchoolContext(selectedEntityId, geometryState, scale);
   }, [selectedEntityId, geometryState, scale]);
 
-  const getToolDescription = (tool: SchoolTool) => {
-    switch (tool) {
-      case 'select':
-        return {
-          title: 'Инструмент «Выделение и перемещение»',
-          hint: 'Позволяет захватывать и перемещать вершины A, B, C по описанной окружности, а также любые построенные вами точки на чертеже.',
-          rule: 'Аксиома непрерывности: при движении вершин все зависимые отрезки и расстояния пересчитываются мгновенно и детерминированно.',
-        };
-      case 'point':
-        return {
-          title: 'Инструмент «Точка» (Point)',
-          hint: 'Поставьте точку в любом месте плоскости. Если кликнуть вблизи описанной окружности, точка автоматически привяжется к окружности (snap-to-circle).',
-          rule: 'Евклидово начало: точка есть то, часть чего есть ничто (объект без измерений).',
-        };
-      case 'segment':
-        return {
-          title: 'Инструмент «Отрезок» (Segment)',
-          hint: 'Кликните первую точку, затем вторую. Между ними будет построен прямолинейный отрезок с вычислением точной длины.',
-          rule: 'Постулат 1: от всякой точки до всякой точки можно провести прямую линию.',
-        };
-      case 'line':
-        return {
-          title: 'Инструмент «Прямая» (Line)',
-          hint: 'Кликните две различные точки. Через них пройдёт бесконечная прямая, пересекающая всю область видимости.',
-          rule: 'Аксиома прямой: через любые две различные точки проходит единственная прямая.',
-        };
-      case 'circle':
-        return {
-          title: 'Инструмент «Окружность» (Circle)',
-          hint: 'Кликните центр будущей окружности, затем точку на её радиусе.',
-          rule: 'Постулат 3: из всякого центра и всяким раствором может быть описан круг.',
-        };
-      case 'ruler':
-        return {
-          title: 'Инструмент «Линейка» (Ruler)',
-          hint: 'Измерение расстояния между любыми двумя точками плоскости. Не оставляет на чертеже новых объектов.',
-          rule: 'Инструмент наблюдения: линейка позволяет исследовать числовые инварианты без загрязнения геометрической модели.',
-        };
-      case 'compass':
-        return {
-          title: 'Инструмент «Циркуль» (Compass)',
-          hint: 'Задайте положение ножки циркуля (центр) и раствор (радиус) для проведения окружности.',
-          rule: 'Классическое построение циркулем и линейкой — фундамент античной и школьной планиметрии.',
-        };
-      case 'perp_bisector':
-        return {
-          title: 'Инструмент «Серединный перпендикуляр»',
-          hint: 'Кликните отрезок или две точки. Строит классический серединный перпендикуляр с вспомогательными окружностями засечек.',
-          rule: 'Геометрическое место точек: каждая точка серединного перпендикуляра равноудалена от концов отрезка.',
-        };
-      case 'angle_bisector':
-        return {
-          title: 'Инструмент «Биссектриса угла»',
-          hint: 'Задайте угол последовательным выбором точек A → V → B. Строит луч-биссектрису с дугой засечки и окружностями равных радиусов.',
-          rule: 'Геометрическое место точек: биссектриса делит угол на две равные половины и равноудалена от сторон угла.',
-        };
-      case 'perpendicular':
-        return {
-          title: 'Инструмент «Перпендикуляр к прямой через точку»',
-          hint: 'Выберите прямую или отрезок L, затем точку P. Строит классический перпендикуляр через точку P к прямой L.',
-          rule: 'Евклидово построение: через любую точку плоскости можно провести единственную прямую, перпендикулярную данной.',
-        };
-      case 'parallel':
-        return {
-          title: 'Инструмент «Параллельная прямая через точку»',
-          hint: 'Выберите прямую или отрезок L, затем точку P вне прямой. Строит классическую параллельную прямую методом ромба.',
-          rule: 'Аксиома параллельности Евклида: через точку, не лежащую на данной прямой, проходит только одна прямая, параллельная данной.',
-        };
-      case 'erase':
-        return {
-          title: 'Инструмент «Ластик» (Erase)',
-          hint: 'Кликните по любой созданной вами точке, отрезку, прямой или окружности для её удаления.',
-          rule: 'Каскадное удаление: при удалении точки все зависящие от неё отрезки и прямые удаляются автоматически.',
-        };
-    }
+  const toolInfo = {
+    title: t(`school.pedagogy.${activeTool}.title`),
+    hint: t(`school.pedagogy.${activeTool}.hint`),
+    rule: t(`school.pedagogy.${activeTool}.rule`),
   };
-
-  const toolInfo = getToolDescription(activeTool);
 
   const handleToggleSelect = (id: string) => {
     if (selectedEntityId === id) {
@@ -162,11 +91,11 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
           <div className="flex items-center gap-2">
             <Ruler className="w-4 h-4 text-amber-600" />
             <div>
-              <div className="font-bold text-amber-950 text-xs">Текущее измерение линейкой:</div>
+              <div className="font-bold text-amber-950 text-xs">{t('school.inventory.currentRuler')}</div>
               <div className="font-mono text-xs font-black text-amber-800">
-                L = {(rulerMeasurement.distanceModel * scale).toFixed(1)} мм{' '}
+                L = {(rulerMeasurement.distanceModel * scale).toFixed(1)} {t('common.mm')}{' '}
                 <span className="text-[10px] font-normal text-amber-700">
-                  ({Math.round(rulerMeasurement.distanceModel)} px)
+                  ({Math.round(rulerMeasurement.distanceModel)} {t('common.px')})
                 </span>
               </div>
             </div>
@@ -176,7 +105,7 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
               onClick={onClearRuler}
               className="text-[10px] px-2 py-1 bg-white border border-amber-300 hover:bg-amber-100 text-amber-900 rounded font-semibold transition cursor-pointer"
             >
-              Сброс
+              {t('common.reset')}
             </button>
           )}
         </div>
@@ -187,10 +116,15 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
         <div className="flex items-center justify-between font-bold text-slate-800 border-b border-slate-100 pb-1">
           <span className="flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            Реестр геометрических объектов
+            {t('school.inventory.title')}
           </span>
           <span className="text-[10px] text-slate-400 font-mono">
-            {pointsList.length}T • {segmentsList.length}O • {linesList.length}П • {circlesList.length}К
+            {t('school.inventory.counts', {
+              p: pointsList.length,
+              s: segmentsList.length,
+              l: linesList.length,
+              c: circlesList.length,
+            })}
           </span>
         </div>
 
@@ -198,7 +132,7 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
         <div className="flex flex-col gap-1">
           <span className="font-semibold text-slate-600 text-[11px] flex items-center gap-1">
             <Dot className="w-3.5 h-3.5 text-indigo-500" />
-            Точки ({pointsList.length})
+            {t('school.inventory.points')} ({pointsList.length})
           </span>
           <div className="grid grid-cols-2 gap-1 max-h-32 overflow-y-auto pr-1">
             {pointsList.map((p) => {
@@ -235,7 +169,7 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
         <div className="flex flex-col gap-1 mt-1">
           <span className="font-semibold text-slate-600 text-[11px] flex items-center gap-1">
             <Minus className="w-3.5 h-3.5 text-sky-500" />
-            Отрезки и хорды ({segmentsList.length})
+            {t('school.inventory.segments')} ({segmentsList.length})
           </span>
           <div className="flex flex-col gap-1 max-h-32 overflow-y-auto pr-1">
             {segmentsList.map((s) => {
@@ -257,12 +191,12 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
                     {s.p2Id}
                     {s.isBaseChord && (
                       <span className={`text-[9px] font-normal ml-1 ${isSelected ? 'text-sky-100' : 'text-slate-400'}`}>
-                        (хорда)
+                        ({t('school.inventory.chord')})
                       </span>
                     )}
                   </span>
                   <span className={`font-bold ${isSelected ? 'text-white' : 'text-sky-800'}`}>
-                    {(s.length * scale).toFixed(1)} мм
+                    {(s.length * scale).toFixed(1)} {t('common.mm')}
                   </span>
                 </button>
               );
@@ -274,7 +208,7 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
         <div className="flex flex-col gap-1 mt-1">
           <span className="font-semibold text-slate-600 text-[11px] flex items-center gap-1">
             <Circle className="w-3.5 h-3.5 text-violet-500" />
-            Окружности ({circlesList.length})
+            {t('school.inventory.circles')} ({circlesList.length})
           </span>
           <div className="flex flex-col gap-1">
             {circlesList.map((c) => {
@@ -292,10 +226,10 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
                   }`}
                 >
                   <span className="font-bold">
-                    {c.isBaseCircumcircle ? 'Описанная окружность ω' : `Круг (${c.centerId})`}
+                    {c.isBaseCircumcircle ? t('school.inventory.circumcircle') : t('school.inventory.circleCenter', { center: c.centerId })}
                   </span>
                   <span className={`font-bold ${isSelected ? 'text-white' : 'text-violet-800'}`}>
-                    R = {(c.radius * scale).toFixed(1)} мм
+                    R = {(c.radius * scale).toFixed(1)} {t('common.mm')}
                   </span>
                 </button>
               );
@@ -308,7 +242,7 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
           <div className="flex flex-col gap-1 mt-1">
             <span className="font-semibold text-slate-600 text-[11px] flex items-center gap-1">
               <MoveHorizontal className="w-3.5 h-3.5 text-slate-500" />
-              Прямые ({linesList.length})
+              {t('school.inventory.lines')} ({linesList.length})
             </span>
             <div className="flex flex-col gap-1">
               {linesList.map((l) => {
@@ -324,10 +258,10 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
                     }`}
                   >
                     <span className="font-bold">
-                      Прямая ({l.p1Id}, {l.p2Id})
+                      {t('school.inventory.linePoints', { p1: l.p1Id, p2: l.p2Id })}
                     </span>
                     <span className={`text-[10px] ${isSelected ? 'text-slate-200' : 'text-slate-500'}`}>
-                      бесконечная
+                      {t('school.inventory.infinite')}
                     </span>
                   </button>
                 );
@@ -339,4 +273,5 @@ export const SchoolObjectInventory: React.FC<SchoolObjectInventoryProps> = ({
     </div>
   );
 };
+
 

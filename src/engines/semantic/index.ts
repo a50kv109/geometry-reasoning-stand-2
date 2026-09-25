@@ -4,3 +4,4 @@
 export * from './types';
 export * from './semanticCommandExecutor';
 export * from './naturalLanguageAdapter';
+export * from './aamGateway';

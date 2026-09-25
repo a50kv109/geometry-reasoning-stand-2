@@ -37,6 +37,7 @@ import {
 import { EducationalCardView } from '../presentation/components/EducationalCardView';
 import { evaluateThalesCard } from '../presentation/templates/thalesCardTemplate';
 import { FullGeometryState, createDefaultGeometryState } from '../engines/constructionCore';
+import { useI18n } from '../i18n';
 
 interface InteractiveTextbookProps {
   vertices: VertexPoint[];
@@ -87,6 +88,7 @@ export const InteractiveTextbook: React.FC<InteractiveTextbookProps> = ({
   scaleMode = 'degrees',
   onChangeScaleMode,
 }) => {
+  const { t } = useI18n();
   const [activeCategory, setActiveCategory] = useState<TopicCategory>('all');
   const [useFrozenData, setUseFrozenData] = useState<boolean>(false);
   const [methodTab, setMethodTab] = useState<'both' | 'classical' | 'relational'>('both');
@@ -190,18 +192,18 @@ export const InteractiveTextbook: React.FC<InteractiveTextbookProps> = ({
 
   // Category filter buttons
   const categories: Array<{ id: TopicCategory; label: string; count: number }> = [
-    { id: 'all', label: 'Все темы', count: 12 },
-    { id: 'sides', label: '1. Хорды и стороны', count: 3 },
-    { id: 'angles', label: '2. Вписанные углы', count: 3 },
-    { id: 'arcs', label: '3. Дуги окружности', count: 3 },
-    { id: 'circle', label: '4. Радиус и диаметр', count: 3 },
-    { id: 'area', label: '5. Площадь треугольника', count: 2 },
-    { id: 'perimeter', label: '6. Периметр', count: 1 },
-    { id: 'special', label: '7. Особые случаи и O', count: 3 },
-    { id: 'pi_ratio', label: '8. π — отношение всей окружности C к D', count: 2 },
-    { id: 'radian_ratio', label: '9. Радиан — дуга s к радиусу R', count: 2 },
-    { id: 'radians_scale', label: '10. π, радианы и доли', count: 2 },
-    { id: 'ratio_quiz', label: '11. Тест: π и Радиан', count: 5 },
+    { id: 'all', label: t('textbook.cat.all'), count: 12 },
+    { id: 'sides', label: t('textbook.cat.sides'), count: 3 },
+    { id: 'angles', label: t('textbook.cat.angles'), count: 3 },
+    { id: 'arcs', label: t('textbook.cat.arcs'), count: 3 },
+    { id: 'circle', label: t('textbook.cat.circle'), count: 3 },
+    { id: 'area', label: t('textbook.cat.area'), count: 2 },
+    { id: 'perimeter', label: t('textbook.cat.perimeter'), count: 1 },
+    { id: 'special', label: t('textbook.cat.special'), count: 3 },
+    { id: 'pi_ratio', label: t('textbook.cat.pi_ratio'), count: 2 },
+    { id: 'radian_ratio', label: t('textbook.cat.radian_ratio'), count: 2 },
+    { id: 'radians_scale', label: t('textbook.cat.radians_scale'), count: 2 },
+    { id: 'ratio_quiz', label: t('textbook.cat.ratio_quiz'), count: 5 },
   ];
 
   return (
@@ -218,33 +220,33 @@ export const InteractiveTextbook: React.FC<InteractiveTextbookProps> = ({
             </div>
             <div>
               <h2 className="text-sm md:text-base font-bold tracking-tight text-white flex items-center gap-2">
-                ОБУЧЕНИЕ — ГЕОМЕТРИЯ ТРЕУГОЛЬНИКА НА ОКРУЖНОСТИ
+                {t('textbook.title')}
               </h2>
               <p className="text-xs text-indigo-200/90 font-medium">
-                Интерактивный учебник формул, связанный с текущим треугольником
+                {t('textbook.subtitle')}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-mono bg-indigo-950/80 border border-indigo-600/50 text-indigo-200 px-2.5 py-1 rounded-lg">
-              Учебный масштаб: 1 px = {scale} мм
+              {t('textbook.scaleLabel', { scale })}
             </span>
           </div>
         </div>
 
         {/* Dynamic Concept Pipeline */}
         <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-indigo-100 bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-800/40">
-          <span className="text-indigo-300 font-bold uppercase tracking-wider text-[10px]">Принцип связи:</span>
-          <span className="bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/50">1. Рисунок слева</span>
+          <span className="text-indigo-300 font-bold uppercase tracking-wider text-[10px]">{t('textbook.pipelineTitle')}</span>
+          <span className="bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/50">{t('textbook.pipelineStep1')}</span>
           <span className="text-indigo-400">➔</span>
-          <span className="bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/50">2. Выбор формулы</span>
+          <span className="bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/50">{t('textbook.pipelineStep2')}</span>
           <span className="text-indigo-400">➔</span>
-          <span className="bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/50">3. Автоподстановка</span>
+          <span className="bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/50">{t('textbook.pipelineStep3')}</span>
           <span className="text-indigo-400">➔</span>
-          <span className="bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/50">4. Пошаговый расчёт</span>
+          <span className="bg-indigo-900/80 px-2 py-0.5 rounded border border-indigo-700/50">{t('textbook.pipelineStep4')}</span>
           <span className="text-indigo-400">➔</span>
-          <span className="bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded border border-emerald-600/50 font-bold">5. Подсветка на диске</span>
+          <span className="bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded border border-emerald-600/50 font-bold">{t('textbook.pipelineStep5')}</span>
         </div>
 
         {/* Frozen State Alert (if triangle is frozen) */}
@@ -252,28 +254,28 @@ export const InteractiveTextbook: React.FC<InteractiveTextbookProps> = ({
           <div className="mt-3 bg-amber-500/10 border border-amber-400/30 rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2 text-amber-200">
               <Lock className="w-3.5 h-3.5 text-amber-400" />
-              <span>Есть зафиксированный треугольник (лабораторный снимок).</span>
+              <span>{t('textbook.frozenAlert')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setUseFrozenData(false)}
-                className={`px-2.5 py-1 rounded text-[11px] font-semibold transition ${
+                className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
                   !useFrozenData
                     ? 'bg-amber-400 text-slate-900 font-bold'
                     : 'text-amber-200 hover:bg-amber-500/20'
                 }`}
               >
-                Живой треугольник
+                {t('textbook.liveTriangle')}
               </button>
               <button
                 onClick={() => setUseFrozenData(true)}
-                className={`px-2.5 py-1 rounded text-[11px] font-semibold transition ${
+                className={`px-2.5 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
                   useFrozenData
                     ? 'bg-amber-400 text-slate-900 font-bold'
                     : 'text-amber-200 hover:bg-amber-500/20'
                 }`}
               >
-                Использовать снимок
+                {t('textbook.useSnapshot')}
               </button>
             </div>
           </div>
@@ -288,7 +290,7 @@ export const InteractiveTextbook: React.FC<InteractiveTextbookProps> = ({
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                 activeCategory === cat.id
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
@@ -303,27 +305,27 @@ export const InteractiveTextbook: React.FC<InteractiveTextbookProps> = ({
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 shrink-0 text-xs">
           <button
             onClick={() => setMethodTab('both')}
-            className={`px-2.5 py-1 rounded font-medium transition ${
+            className={`px-2.5 py-1 rounded font-medium transition cursor-pointer ${
               methodTab === 'both' ? 'bg-white text-indigo-700 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Оба способа
+            {t('textbook.methods.both')}
           </button>
           <button
             onClick={() => setMethodTab('classical')}
-            className={`px-2.5 py-1 rounded font-medium transition ${
+            className={`px-2.5 py-1 rounded font-medium transition cursor-pointer ${
               methodTab === 'classical' ? 'bg-white text-indigo-700 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Классический
+            {t('textbook.methods.classical')}
           </button>
           <button
             onClick={() => setMethodTab('relational')}
-            className={`px-2.5 py-1 rounded font-medium transition ${
+            className={`px-2.5 py-1 rounded font-medium transition cursor-pointer ${
               methodTab === 'relational' ? 'bg-white text-emerald-700 font-bold shadow-2xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Реляционный
+            {t('textbook.methods.relational')}
           </button>
         </div>
       </div>

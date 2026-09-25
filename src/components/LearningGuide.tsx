@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Compass, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { TriangleClass } from '../types';
+import { useI18n } from '../i18n';
 
 interface LearningGuideProps {
   currentClass: TriangleClass;
@@ -9,52 +10,26 @@ interface LearningGuideProps {
   onSetMode: (mode: 'explore' | 'learn') => void;
 }
 
-const LEARN_STEPS = [
-  {
-    step: 1,
-    title: 'Три точки на окружности',
-    text: 'Вершины A, B, C всегда находятся на одной замкнутой окружности. Попробуйте переместить любую из них.',
-  },
-  {
-    step: 2,
-    title: 'Стороны треугольника — это хорды',
-    text: 'Отрезки AB, BC и CA соединяют точки окружности. В геометрии такие отрезки называются хордами.',
-  },
-  {
-    step: 3,
-    title: 'Три дуги окружности',
-    text: 'Три вершины делят окружность ровно на три дуги: Дуга AB, Дуга BC, Дуга CA. Их сумма всегда равна целому кругу (360°)!',
-  },
-  {
-    step: 4,
-    title: 'Связь: Дуга ➔ Хорда',
-    text: 'Каждая сторона стягивает свою дугу. Чем больше дуга, тем длиннее хорда (вплоть до диаметра).',
-  },
-  {
-    step: 5,
-    title: 'Противоположная вершина',
-    text: 'Угол при вершине смотрит на противоположную сторону и дугу! Вписанный угол равен половине противоположной дуги (например, ∠A = ½ дуги BC).',
-  },
-  {
-    step: 6,
-    title: 'Центр O и три радиуса',
-    text: 'Точка O — общий центр. Отрезки OA = OB = OC = R равны радиусу. Все три вершины равноудалены от центра.',
-  },
-  {
-    step: 7,
-    title: 'Положение центра O',
-    text: 'Центр внутри — треугольник остроугольный. Центр лежит на стороне — прямоугольный (диаметр!). Центр снаружи — тупоугольный.',
-  },
-];
-
 export const LearningGuide: React.FC<LearningGuideProps> = ({
   currentClass,
   onSelectPreset,
   mode,
   onSetMode,
 }) => {
+  const { t } = useI18n();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const activeStep = LEARN_STEPS[currentStepIndex];
+
+  const learnSteps = [
+    { step: 1, title: t('guide.step1.title'), text: t('guide.step1.text') },
+    { step: 2, title: t('guide.step2.title'), text: t('guide.step2.text') },
+    { step: 3, title: t('guide.step3.title'), text: t('guide.step3.text') },
+    { step: 4, title: t('guide.step4.title'), text: t('guide.step4.text') },
+    { step: 5, title: t('guide.step5.title'), text: t('guide.step5.text') },
+    { step: 6, title: t('guide.step6.title'), text: t('guide.step6.text') },
+    { step: 7, title: t('guide.step7.title'), text: t('guide.step7.text') },
+  ];
+
+  const activeStep = learnSteps[currentStepIndex];
 
   return (
     <div
@@ -67,29 +42,29 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
           <button
             id="modeExploreBtn"
             onClick={() => onSetMode('explore')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
               mode === 'explore'
                 ? 'bg-slate-100 text-slate-800 border-slate-300 shadow-xs'
                 : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            <Compass className="w-3.5 h-3.5" /> EXPLORE (Исследование)
+            <Compass className="w-3.5 h-3.5" /> {t('guide.exploreMode')}
           </button>
           <button
             id="modeLearnBtn"
             onClick={() => onSetMode('learn')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold border transition ${
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer ${
               mode === 'learn'
                 ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
                 : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" /> LEARN MODE (Обучение)
+            <Sparkles className="w-3.5 h-3.5" /> {t('guide.learnMode')}
           </button>
         </div>
 
         <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider hidden sm:inline">
-          5–8 класс
+          {t('guide.grade')}
         </span>
       </div>
 
@@ -98,56 +73,56 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
         <div className="space-y-3.5">
           <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5">
             <h4 className="text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
-              <span>💡</span> Что изменится, если передвинуть одну вершину?
+              <span>💡</span> {t('guide.exploreQuestion')}
             </h4>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Потяните любую точку <strong>A, B или C</strong>. Обратите внимание: меняется не одна сторона, а <strong>сразу вся система</strong> — две прилегающие дуги, противоположный угол и расстояние до центра O.
+              {t('guide.exploreHint')}
             </p>
           </div>
 
           {/* Presets: ACUTE, RIGHT, OBTUSE */}
           <div>
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-              Учебные конфигурации:
+              {t('guide.configurations')}
             </div>
             <div className="grid grid-cols-3 gap-2">
               <button
                 id="presetAcuteBtn"
                 onClick={() => onSelectPreset('acute')}
-                className={`p-2.5 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center gap-0.5 ${
+                className={`p-2.5 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center gap-0.5 cursor-pointer ${
                   currentClass === 'acute'
                     ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                <span>ОСТРЫЙ</span>
-                <span className="text-[10px] font-normal text-slate-500">O внутри</span>
+                <span>{t('guide.presetAcute')}</span>
+                <span className="text-[10px] font-normal text-slate-500">{t('guide.presetAcuteDesc')}</span>
               </button>
 
               <button
                 id="presetRightBtn"
                 onClick={() => onSelectPreset('right')}
-                className={`p-2.5 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center gap-0.5 ${
+                className={`p-2.5 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center gap-0.5 cursor-pointer ${
                   currentClass === 'right'
                     ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                <span>ПРЯМОЙ (90°)</span>
-                <span className="text-[10px] font-normal text-slate-500">O на стороне</span>
+                <span>{t('guide.presetRight')}</span>
+                <span className="text-[10px] font-normal text-slate-500">{t('guide.presetRightDesc')}</span>
               </button>
 
               <button
                 id="presetObtuseBtn"
                 onClick={() => onSelectPreset('obtuse')}
-                className={`p-2.5 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center gap-0.5 ${
+                className={`p-2.5 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center gap-0.5 cursor-pointer ${
                   currentClass === 'obtuse'
                     ? 'bg-amber-100 text-amber-800 border-amber-300 shadow-xs'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                <span>ТУПОЙ</span>
-                <span className="text-[10px] font-normal text-slate-500">O снаружи</span>
+                <span>{t('guide.presetObtuse')}</span>
+                <span className="text-[10px] font-normal text-slate-500">{t('guide.presetObtuseDesc')}</span>
               </button>
             </div>
           </div>
@@ -157,7 +132,11 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
           <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3.5 space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-indigo-900 flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5 text-indigo-600" /> Шаг {activeStep.step} из {LEARN_STEPS.length}: {activeStep.title}
+                <CheckCircle className="w-3.5 h-3.5 text-indigo-600" /> {t('guide.stepOf', {
+                  step: activeStep.step,
+                  total: learnSteps.length,
+                  title: activeStep.title,
+                })}
               </span>
             </div>
             <p className="text-xs text-slate-700 leading-relaxed pt-1">
@@ -170,17 +149,17 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
               id="prevStepBtn"
               disabled={currentStepIndex === 0}
               onClick={() => setCurrentStepIndex((prev) => Math.max(0, prev - 1))}
-              className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-40 rounded-lg text-xs font-semibold text-slate-700 transition"
+              className="flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 disabled:opacity-40 rounded-lg text-xs font-semibold text-slate-700 transition cursor-pointer"
             >
-              <ChevronLeft className="w-3.5 h-3.5" /> Назад
+              <ChevronLeft className="w-3.5 h-3.5" /> {t('guide.prev')}
             </button>
 
             <div className="flex gap-1.5">
-              {LEARN_STEPS.map((s, idx) => (
+              {learnSteps.map((s, idx) => (
                 <button
                   key={s.step}
                   onClick={() => setCurrentStepIndex(idx)}
-                  className={`w-2.5 h-2.5 rounded-full transition ${
+                  className={`w-2.5 h-2.5 rounded-full transition cursor-pointer ${
                     idx === currentStepIndex ? 'bg-indigo-600 scale-125' : 'bg-slate-200'
                   }`}
                 />
@@ -189,11 +168,11 @@ export const LearningGuide: React.FC<LearningGuideProps> = ({
 
             <button
               id="nextStepBtn"
-              disabled={currentStepIndex === LEARN_STEPS.length - 1}
-              onClick={() => setCurrentStepIndex((prev) => Math.min(LEARN_STEPS.length - 1, prev + 1))}
-              className="flex items-center gap-1 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg text-xs font-bold text-white transition shadow-sm shadow-indigo-200"
+              disabled={currentStepIndex === learnSteps.length - 1}
+              onClick={() => setCurrentStepIndex((prev) => Math.min(learnSteps.length - 1, prev + 1))}
+              className="flex items-center gap-1 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 rounded-lg text-xs font-bold text-white transition shadow-sm shadow-indigo-200 cursor-pointer"
             >
-              Далее <ChevronRight className="w-3.5 h-3.5" />
+              {t('guide.next')} <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

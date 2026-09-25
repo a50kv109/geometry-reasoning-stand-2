@@ -47,9 +47,15 @@ import { SchoolModeWrapper } from './components/school/SchoolModeWrapper';
 import { SchoolObjectInventory } from './components/school/SchoolObjectInventory';
 import { ResearchObservationPanel } from './components/research/ResearchObservationPanel';
 import { GeometryConfigurationPanel } from './components/configuration/GeometryConfigurationPanel';
+import { AAMGatewayPanel } from './components/aam/AAMGatewayPanel';
 import { Table } from 'lucide-react';
+import { I18nProvider, useI18n } from './i18n';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { ProjectMenu } from './components/project/ProjectMenu';
+import { GeometryProjectSettings } from './engines/project';
 
-export default function App() {
+function StandAppContent() {
+  const { t } = useI18n();
   // Primary Stand Mode: 'research' (Лаборатория / Исследование) | 'school' (Школьный режим / Чертёжные инструменты)
   const [standMode, setStandMode] = useState<'research' | 'school'>('research');
 
@@ -149,8 +155,8 @@ export default function App() {
   // Selected Geometric Entity in School Context Reference
   const [selectedSchoolEntityId, setSelectedSchoolEntityId] = useState<string | null>(null);
 
-  // Right Panel Active Tab: 'school' | 'stats' | 'config' | 'learning'
-  const [rightPanelTab, setRightPanelTab] = useState<'school' | 'stats' | 'config' | 'learning'>('stats');
+  // Right Panel Active Tab: 'school' | 'stats' | 'config' | 'aam' | 'learning'
+  const [rightPanelTab, setRightPanelTab] = useState<'school' | 'stats' | 'config' | 'aam' | 'learning'>('stats');
 
   const [currentEngine, setCurrentEngine] = useState<'classical' | 'matrix'>('classical');
   const [verifyEnabled, setVerifyEnabled] = useState(true);
@@ -363,6 +369,39 @@ export default function App() {
     setBaselineSnapshot(createGeometrySnapshot({ pointsU: defaultPts, R, scale }));
   };
 
+  const handleLoadProjectState = useCallback(
+    (
+      nextState: FullGeometryState,
+      settings?: GeometryProjectSettings,
+      _projectName?: string
+    ) => {
+      setGeometryState(nextState);
+      setPointsU({ ...nextState.pointsU });
+      setHistory(createInitialHistory(nextState));
+      setSelectedSchoolEntityId(null);
+      setIsFrozen(false);
+
+      if (settings) {
+        if (settings.rotationDeg !== undefined) setRotationDeg(settings.rotationDeg);
+        if (settings.scale !== undefined) setScale(settings.scale);
+        if (settings.scaleMode !== undefined) setScaleMode(settings.scaleMode);
+        if (settings.clientModeHint !== undefined) {
+          setStandMode(settings.clientModeHint);
+          if (settings.clientModeHint === 'school') setRightPanelTab('school');
+        }
+      }
+
+      setBaselineSnapshot(
+        createGeometrySnapshot({
+          pointsU: nextState.pointsU,
+          R: nextState.R,
+          scale: settings?.scale ?? scale,
+        })
+      );
+    },
+    [scale]
+  );
+
   const handleToggleFreeze = () => {
     if (isFrozen) {
       setIsFrozen(false);
@@ -389,99 +428,116 @@ export default function App() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-bold text-sm leading-tight text-slate-900">
-                Circle Triangle Stand
+                {t('header.title')}
               </h1>
               <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
-                {Math.round(splitPercent)} / {Math.round(100 - splitPercent)} WORKBENCH
+                {t('header.workbenchBadge', { left: Math.round(splitPercent), right: Math.round(100 - splitPercent) })}
               </span>
             </div>
             <p className="text-[11px] text-slate-500 font-medium">
-              Геометрический стенд : Исследование и школьные чертёжные инструменты
+              {t('header.subtitle')}
             </p>
           </div>
         </div>
 
-        {/* Primary Stand Mode Switcher (Research vs School Mode) */}
-        <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 shadow-2xs">
-          <button
-            id="modeSwitchResearchBtn"
-            onClick={() => {
-              setStandMode('research');
-              if (rightPanelTab === 'school') setRightPanelTab('stats');
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-              standMode === 'research'
-                ? 'bg-white text-indigo-950 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Microscope className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Исследование</span>
-          </button>
-          <button
-            id="modeSwitchSchoolBtn"
-            onClick={() => {
-              setStandMode('school');
-              setRightPanelTab('school');
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-              standMode === 'school'
-                ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <PencilRuler className="w-3.5 h-3.5" />
-            <span>Школьный режим</span>
-          </button>
+        {/* Center Control Group: Mode Switcher + Universal Language Switcher */}
+        <div className="flex items-center gap-2">
+          {/* Primary Stand Mode Switcher (Research vs School Mode) */}
+          <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 shadow-2xs">
+            <button
+              id="modeSwitchResearchBtn"
+              onClick={() => {
+                setStandMode('research');
+                if (rightPanelTab === 'school') setRightPanelTab('stats');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                standMode === 'research'
+                  ? 'bg-white text-indigo-950 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Microscope className="w-3.5 h-3.5 text-indigo-600" />
+              <span>{t('header.modeResearch')}</span>
+            </button>
+            <button
+              id="modeSwitchSchoolBtn"
+              onClick={() => {
+                setStandMode('school');
+                setRightPanelTab('school');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                standMode === 'school'
+                  ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-200'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <PencilRuler className="w-3.5 h-3.5" />
+              <span>{t('header.modeSchool')}</span>
+            </button>
+          </div>
+
+          {/* Universal Language Switcher (RU | UA | EN) */}
+          <LanguageSwitcher />
         </div>
 
         {/* Presets and Controls */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {/* Quick Presets */}
           <div className="hidden md:flex items-center gap-1 bg-slate-50 p-1 rounded-lg border border-slate-200">
-            <span className="text-[11px] text-slate-500 px-1 font-medium">Пресеты:</span>
+            <span className="text-[11px] text-slate-500 px-1 font-medium">{t('header.presets')}</span>
             <button
               id="topPresetAcute"
               onClick={() => handleSelectPreset('acute')}
-              className={`px-2 py-1 rounded text-xs font-semibold transition ${
+              className={`px-2 py-1 rounded text-xs font-semibold transition cursor-pointer ${
                 activeResult.classification === 'acute'
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Острый
+              {t('header.presetAcute')}
             </button>
             <button
               id="topPresetRight"
               onClick={() => handleSelectPreset('right')}
-              className={`px-2 py-1 rounded text-xs font-semibold transition ${
+              className={`px-2 py-1 rounded text-xs font-semibold transition cursor-pointer ${
                 activeResult.classification === 'right'
                   ? 'bg-emerald-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Прямой (Фалес)
+              {t('header.presetRight')}
             </button>
             <button
               id="topPresetObtuse"
               onClick={() => handleSelectPreset('obtuse')}
-              className={`px-2 py-1 rounded text-xs font-semibold transition ${
+              className={`px-2 py-1 rounded text-xs font-semibold transition cursor-pointer ${
                 activeResult.classification === 'obtuse'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Тупой
+              {t('header.presetObtuse')}
             </button>
           </div>
+
+          {/* Project Persistence (Save, Open, Export, Import, New) */}
+          <ProjectMenu
+            geometryState={geometryState}
+            rotationDeg={rotationDeg}
+            scale={scale}
+            scaleMode={scaleMode}
+            standMode={standMode}
+            onLoadProjectState={handleLoadProjectState}
+            onNewProject={handleReset}
+          />
 
           <button
             id="resetPointsBtn"
             onClick={handleReset}
-            title="Сбросить точки и угол поворота"
+            title={t('header.resetTooltip')}
             className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-semibold flex items-center gap-1.5 border border-slate-200 transition cursor-pointer"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Сброс
+            <RefreshCw className="w-3.5 h-3.5" /> {t('common.reset')}
           </button>
 
           {/* Header Geometry Undo Button */}
@@ -491,8 +547,8 @@ export default function App() {
             disabled={!canUndoAction}
             title={
               canUndoAction
-                ? 'Отменить последнее действие (Ctrl+Z)'
-                : 'Нет действий для отмены'
+                ? t('common.undoTooltip')
+                : t('common.noUndo')
             }
             className={`px-2.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition border ${
               canUndoAction
@@ -501,7 +557,7 @@ export default function App() {
             }`}
           >
             <Undo2 className="w-3.5 h-3.5" />
-            <span>Отменить</span>
+            <span>{t('common.undo')}</span>
           </button>
         </div>
       </header>
@@ -530,17 +586,17 @@ export default function App() {
           <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
-                GEOMETRY
+                {t('workbench.geometryTitle')}
               </span>
               <span className="text-xs font-semibold text-slate-700">
-                {standMode === 'school' ? 'Школьный чертёжный планшет' : 'Интерактивный циферблат'}
+                {standMode === 'school' ? t('workbench.leftTitleSchool') : t('workbench.leftTitleResearch')}
               </span>
             </div>
 
             <div className="text-[11px] text-slate-500 font-medium">
               {standMode === 'school'
-                ? 'Используйте панель инструментов над чертежом'
-                : 'Тяните вершины A, B, C или вращайте диск ↻'}
+                ? t('workbench.leftHintSchool')
+                : t('workbench.leftHintResearch')}
             </div>
           </div>
 
@@ -636,14 +692,14 @@ export default function App() {
                 <button
                   id="rightTabSchoolBtn"
                   onClick={() => setRightPanelTab('school')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                     rightPanelTab === 'school'
                       ? 'bg-white text-indigo-950 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <PencilRuler className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>ЧЕРТЁЖ И ОБЪЕКТЫ</span>
+                  <span>{t('workbench.rightTabSchool')}</span>
                 </button>
               )}
               <button
@@ -652,14 +708,14 @@ export default function App() {
                   setRightPanelTab('stats');
                   setMode('explore');
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   rightPanelTab === 'stats'
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Activity className="w-3.5 h-3.5 text-indigo-600" />
-                <span>СТАТИСТИКА / ЛАБОРАТОРИЯ</span>
+                <span>{t('workbench.rightTabStats')}</span>
               </button>
               <button
                 id="rightTabConfigBtn"
@@ -667,14 +723,29 @@ export default function App() {
                   setRightPanelTab('config');
                   setMode('explore');
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   rightPanelTab === 'config'
                     ? 'bg-white text-indigo-950 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Table className="w-3.5 h-3.5 text-indigo-600" />
-                <span>КОНФИГУРАЦИЯ (GCM-01)</span>
+                <span>{t('workbench.rightTabPassport')}</span>
+              </button>
+              <button
+                id="rightTabAamBtn"
+                onClick={() => {
+                  setRightPanelTab('aam');
+                  setMode('explore');
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  rightPanelTab === 'aam'
+                    ? 'bg-white text-indigo-950 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('workbench.rightTabAam')}</span>
               </button>
               <button
                 id="rightTabLearningBtn"
@@ -682,24 +753,21 @@ export default function App() {
                   setRightPanelTab('learning');
                   setMode('learn');
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   rightPanelTab === 'learning'
                     ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-200'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <GraduationCap className="w-3.5 h-3.5" />
-                <span>ОБУЧЕНИЕ</span>
+                <span>{t('workbench.rightTabLearn')}</span>
               </button>
             </div>
 
             <div className="flex items-center gap-2 text-xs">
               <span className="text-[11px] font-mono text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
-                1 px = {scale} мм (учебный)
+                1 px = {scale} {t('common.mm')} {t('canvas.scaleEducational')}
               </span>
-              <div className="text-[11px] font-mono text-slate-400">
-                ↕ Прокрутка
-              </div>
             </div>
           </div>
 
@@ -717,6 +785,23 @@ export default function App() {
             <ErrorBoundary fallbackTitle="Ошибка отображения семантической конфигурации">
               <GeometryConfigurationPanel
                 geometryState={geometryState}
+                scale={scale}
+              />
+            </ErrorBoundary>
+          ) : rightPanelTab === 'aam' ? (
+            <ErrorBoundary fallbackTitle="Ошибка отображения AAM Gateway">
+              <AAMGatewayPanel
+                geometryState={geometryState}
+                onApplyState={(nextState) => {
+                  setGeometryState(nextState);
+                  if (
+                    nextState.pointsU.A !== pointsU.A ||
+                    nextState.pointsU.B !== pointsU.B ||
+                    nextState.pointsU.C !== pointsU.C
+                  ) {
+                    setPointsU(nextState.pointsU);
+                  }
+                }}
                 scale={scale}
               />
             </ErrorBoundary>
@@ -835,5 +920,13 @@ export default function App() {
 
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <I18nProvider>
+      <StandAppContent />
+    </I18nProvider>
   );
 }
