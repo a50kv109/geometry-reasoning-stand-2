@@ -79,12 +79,126 @@ The gateway benchmark test suite (`src/engines/tests/testAAMGatewayBenchmark.ts`
 
 ---
 
-## 4. How to Run the Verification Benchmark
+## 5. Visual Semantic Language & Semantic Guard (Experimental PoC)
 
+### STATUS:
+* **STATUS:** EXPERIMENTAL PoC
+* **Implementation:** READY FOR EXPERIMENT
+* **Not yet:** Final production semantic architecture
+
+### 5.1. Overview & Purpose
+**Visual Semantic Language** is a lightweight mechanism in Geometry Stand V1 that enables students and educational clients to address existing geometric objects through their **visual features** (colors and markers) rather than formal alphanumeric names (e.g., `∠ABC`).
+
+Examples:
+* *«красная сторона»* / *«синяя сторона»*
+* *«красно-зелёный угол»* / *«угол между красной и зелёной сторонами»*
+* *«угол с чёрным квадратиком»*
+
+**Important Architectural Note:** This is **NOT Computer Vision, OCR, or AI image recognition**. The Geometry Stand natively knows the presentation metadata (`color`, `visualMarker`) of its own geometric primitives.
+
+---
+
+### 5.2. Four Levels of Identity & Invariant
+To prevent visual presentation from corrupting mathematical truth, the architecture enforces four distinct identity levels:
+
+```text
+1. OBJECT IDENTITY
+   portableId / localId (e.g. "edge_AB", "chord_BC")
+
+2. SEMANTIC IDENTITY
+   semanticType / semanticRole (e.g. SEGMENT, vertex, altitude)
+
+3. VISUAL IDENTITY
+   color / visualMarker (e.g. RED, GREEN, RIGHT_ANGLE_SQUARE)
+
+4. LINGUISTIC IDENTITY
+   natural-language tokens & descriptions
+```
+
+> **Core Invariant:** *Visual Identity is mutable; Semantic Identity is stable.*  
+> *Example:* If segment `edge_AB` is initially **RED** and is subsequently recolored to **BLUE**, its `portableId` (`edge_AB`) and geometric coordinates remain rigorously unchanged. Only its Visual Identity is updated.
+
+---
+
+### 5.3. Architectural Pipeline & Responsibilities
+When a visual query is submitted, it flows through an isolated experimental preprocessor before reaching the core engine:
+
+```text
+Natural Language
+      │
+      ▼
+AAM Gateway
+      │
+      ▼
+Visual Identity Resolver  ──► "Which object is the user pointing to?"
+      │
+      ▼
+Canonical Semantic Intent
+      │
+      ▼
+Semantic Guard            ──► "Can this intent be executed geometrically without contradiction?"
+      │
+      ├─► EXECUTE ──────────► Geometry Engine ("How to perform the construction?")
+      ├─► CLARIFY
+      └─► REJECT
+```
+
+* **Visual Resolver:** Resolves visual descriptions (colors, intersecting colored rays, square markers) into canonical `portableId`s.
+* **Semantic Guard:** Validates geometric consistency, detects contradictions (e.g., claiming a right angle with a `RIGHT_ANGLE_SQUARE` is acute), and handles ambiguity without guessing.
+* **Geometry Core:** Unchanged and isolated from visual/linguistic parsing.
+
+---
+
+### 5.4. End-to-End Simulation Example
+```text
+User Input: «Построй биссектрису красно-зелёного угла»
+        │
+        ▼
+Visual Resolver identifies RED segment (AB) and GREEN segment (BC)
+        │
+        ▼
+Common Vertex found: B
+        │
+        ▼
+Resolved Entity: ANGLE(B, AB, BC)
+        │
+        ▼
+Semantic Guard checks consistency ──► VALID
+        │
+        ▼
+Canonical Command: CONSTRUCT_ANGLE_BISECTOR(vertex: 'B')
+        │
+        ▼
+Geometry Engine executes construction & updates Constructive DAG
+```
+
+---
+
+### 5.5. Handling Ambiguity & Right Angle Markers
+* **Ambiguity Handling:** If multiple objects match a visual description (e.g., two red segments when a perpendicular is requested), the Visual Resolver returns `AMBIGUOUS`, and the Semantic Guard outputs `CLARIFY` (e.g., asking the user to specify which red line). The system never guesses.
+* **Right Angle Marker (`RIGHT_ANGLE_SQUARE`):** Visual markers such as a black square indicate a right angle ($90^\circ$). If a student claims the marked angle is acute, the Semantic Guard detects a contradiction and outputs an educational explanation (`REJECT` with correction).
+
+---
+
+### 5.6. Test Coverage & Core Impact
+* **Visual Semantic tests:** 12/12 PASS
+* **Regression suites (all 26 test suites):** 26/26 PASS (`npm run test:all`)
+* **TypeScript Lint:** PASS (`npm run lint`)
+* **Production Build:** SUCCESS (`npm run build`)
+
+#### Core Impact:
+* **Geometry Core:** unchanged
+* **PGS-2D schema:** unchanged
+* **Existing AAM text path:** preserved (via Fast Bypass)
+* **Visual Semantic Layer:** isolated experimental addition
+
+---
+
+## 6. How to Run the Visual Semantic Test Suite
 ```bash
-# Run AAM Gateway 20-scenario benchmark suite
-npm run test:aam
+# Run Visual Semantic Language & Guard test suite
+npm run test:visual
 
-# Run all test suites
+# Run all 26 test suites
 npm run test:all
 ```
