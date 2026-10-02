@@ -47,6 +47,22 @@ import { SchoolModeWrapper } from './components/school/SchoolModeWrapper';
 import { SchoolObjectInventory } from './components/school/SchoolObjectInventory';
 import { ResearchObservationPanel } from './components/research/ResearchObservationPanel';
 import { GeometryConfigurationPanel } from './components/configuration/GeometryConfigurationPanel';
+import { ResearchPlaneBar } from './components/research/ResearchPlaneBar';
+import { Plane2WorkspacePanel } from './components/research/Plane2WorkspacePanel';
+import { PlaneOverlaySlider } from './components/research/PlaneOverlaySlider';
+import {
+  TriangleResearchSession,
+  PlaneId,
+  clonePlane1ToPlane2,
+  importPgsToPlane2,
+  exportPlane2ToPgs,
+  dispatchSessionCommand,
+  setActivePlane,
+  setPlane2Lifecycle,
+  resetPlane2,
+  setOverlayEnabled,
+  setOverlayMix,
+} from './engines/research';
 import { AAMGatewayPanel } from './components/aam/AAMGatewayPanel';
 import { Table } from 'lucide-react';
 import { I18nProvider, useI18n } from './i18n';
@@ -82,6 +98,81 @@ function StandAppContent() {
       R
     )
   );
+
+  // Triangle Research Session (Plane 1 Authoritative + Plane 2 Workspace)
+  const [researchSession, setResearchSession] = useState<TriangleResearchSession>(() => ({
+    plane1: createDefaultGeometryState({ A: 0.12, B: 0.45, C: 0.78 }, R),
+    plane2: null,
+    activePlane: 'PLANE_1',
+    plane2Lifecycle: 'BUILDING',
+    overlay: { enabled: false, mix: 0.5 },
+  }));
+
+  // Keep plane1 in sync with geometryState when on Plane 1
+  const updateGeometryState = useCallback((nextState: FullGeometryState) => {
+    setGeometryState(nextState);
+    setResearchSession((prev) => ({
+      ...prev,
+      plane1: nextState,
+    }));
+  }, []);
+
+  const activeGeometryState =
+    researchSession.activePlane === 'PLANE_2' && researchSession.plane2
+      ? researchSession.plane2.geometryState
+      : researchSession.plane1;
+
+  const handleSelectActivePlane = useCallback((planeId: PlaneId) => {
+    setResearchSession((prev) => setActivePlane(prev, planeId));
+  }, []);
+
+  const handleClonePlane1ToPlane2 = useCallback(() => {
+    setResearchSession((prev) => clonePlane1ToPlane2(prev));
+  }, []);
+
+  const handleImportPgsToPlane2 = useCallback((jsonStr: string) => {
+    setResearchSession((prev) => {
+      const res = importPgsToPlane2(prev, jsonStr);
+      if (!res.success) {
+        alert(res.error || 'Ошибка импорта PGS Passport на Plane 2');
+        return prev;
+      }
+      return res.session;
+    });
+  }, []);
+
+  const handleExportPlane2Pgs = useCallback(() => {
+    if (!researchSession.plane2) return;
+    const passport = exportPlane2ToPgs(researchSession.plane2);
+    const jsonStr = JSON.stringify(passport, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `plane2-${passport.sourceClaim.standId}.pgs.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [researchSession.plane2]);
+
+  const handleTogglePlane2Lifecycle = useCallback(() => {
+    setResearchSession((prev) =>
+      setPlane2Lifecycle(prev, prev.plane2Lifecycle === 'BUILDING' ? 'FIXED' : 'BUILDING')
+    );
+  }, []);
+
+  const handleResetPlane2 = useCallback(() => {
+    setResearchSession((prev) => resetPlane2(prev));
+  }, []);
+
+  const handleToggleOverlay = useCallback(() => {
+    setResearchSession((prev) =>
+      setOverlayEnabled(prev, !prev.overlay.enabled)
+    );
+  }, []);
+
+  const handleChangeOverlayMix = useCallback((mix: number) => {
+    setResearchSession((prev) => setOverlayMix(prev, mix));
+  }, []);
 
   // Centralized Geometry Undo History Stack
   const [history, setHistory] = useState<GeometryHistory>(() =>
@@ -562,6 +653,18 @@ function StandAppContent() {
         </div>
       </header>
 
+      {/* Research Plane 1 + Plane 2 Control Bar */}
+      <ResearchPlaneBar
+        session={researchSession}
+        onSelectActivePlane={handleSelectActivePlane}
+        onClonePlane1ToPlane2={handleClonePlane1ToPlane2}
+        onImportPgsToPlane2={handleImportPgsToPlane2}
+        onExportPlane2Pgs={handleExportPlane2Pgs}
+        onTogglePlane2Lifecycle={handleTogglePlane2Lifecycle}
+        onResetPlane2={handleResetPlane2}
+        onOpenWorkspacePanel={() => setRightPanelTab('config')}
+      />
+
       {/* Main Resizable Split Workspace:
           Left: GEOMETRY (Fixed in place, overflow-hidden, 100% visible)
           Center: Resizable Splitter with 50/50 Quick Reset
@@ -601,7 +704,13 @@ function StandAppContent() {
           </div>
 
           {/* Interactive Geometry Stage (Maximizing Available Screen Space) */}
-          <div className="flex-1 min-h-0 w-full flex items-center justify-center">
+          <div className="flex-1 min-h-0 w-full flex items-center justify-center relative">
+            <PlaneOverlaySlider
+              overlay={researchSession.overlay}
+              hasPlane2={researchSession.plane2 !== null}
+              onToggleOverlay={handleToggleOverlay}
+              onChangeMix={handleChangeOverlayMix}
+            />
             {standMode === 'school' ? (
               <SchoolModeWrapper
                 geometryState={geometryState}
@@ -639,6 +748,10 @@ function StandAppContent() {
                     onMoveSchoolPoint={handleMoveSchoolPoint}
                     onDragStart={handleDragStart}
                     onDragCommit={handleDragCommit}
+                    overlayEnabled={researchSession.overlay.enabled}
+                    overlayMix={researchSession.overlay.mix}
+                    overlayPlane1State={researchSession.plane1}
+                    overlayPlane2State={researchSession.plane2?.geometryState}
                   />
                 )}
               </SchoolModeWrapper>
@@ -657,9 +770,13 @@ function StandAppContent() {
                 scale={scale}
                 onChangeScale={setScale}
                 schoolMode={false}
-                schoolState={geometryState}
+                schoolState={activeGeometryState}
                 onDragStart={handleDragStart}
                 onDragCommit={handleDragCommit}
+                overlayEnabled={researchSession.overlay.enabled}
+                overlayMix={researchSession.overlay.mix}
+                overlayPlane1State={researchSession.plane1}
+                overlayPlane2State={researchSession.plane2?.geometryState}
               />
             )}
           </div>
@@ -783,10 +900,38 @@ function StandAppContent() {
             </ErrorBoundary>
           ) : rightPanelTab === 'config' ? (
             <ErrorBoundary fallbackTitle="Ошибка отображения семантической конфигурации">
-              <GeometryConfigurationPanel
-                geometryState={geometryState}
-                scale={scale}
-              />
+              <div className="space-y-4">
+                {researchSession.plane2 && (
+                  <Plane2WorkspacePanel
+                    workspace={researchSession.plane2}
+                    lifecycle={researchSession.plane2Lifecycle}
+                    onToggleLifecycle={handleTogglePlane2Lifecycle}
+                  />
+                )}
+                <GeometryConfigurationPanel
+                  geometryState={activeGeometryState}
+                  scale={scale}
+                  onStateUpdate={(nextState) => {
+                    if (researchSession.activePlane === 'PLANE_1') {
+                      updateGeometryState(nextState);
+                    } else if (researchSession.plane2) {
+                      setResearchSession((prev) => ({
+                        ...prev,
+                        plane2: prev.plane2
+                          ? { ...prev.plane2, geometryState: nextState, isModified: true }
+                          : null,
+                      }));
+                    }
+                    if (
+                      nextState.pointsU.A !== pointsU.A ||
+                      nextState.pointsU.B !== pointsU.B ||
+                      nextState.pointsU.C !== pointsU.C
+                    ) {
+                      setPointsU(nextState.pointsU);
+                    }
+                  }}
+                />
+              </div>
             </ErrorBoundary>
           ) : rightPanelTab === 'aam' ? (
             <ErrorBoundary fallbackTitle="Ошибка отображения AAM Gateway">
@@ -850,6 +995,16 @@ function StandAppContent() {
               <GeometryConfigurationPanel
                 geometryState={geometryState}
                 scale={scale}
+                onStateUpdate={(nextState) => {
+                  setGeometryState(nextState);
+                  if (
+                    nextState.pointsU.A !== pointsU.A ||
+                    nextState.pointsU.B !== pointsU.B ||
+                    nextState.pointsU.C !== pointsU.C
+                  ) {
+                    setPointsU(nextState.pointsU);
+                  }
+                }}
               />
 
               {/* 6. RESEARCH OBSERVATION MODULE (PACKET #4) */}

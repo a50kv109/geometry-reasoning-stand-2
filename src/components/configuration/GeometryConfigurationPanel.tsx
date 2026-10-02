@@ -25,6 +25,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { FullGeometryState } from '../../engines/constructionCore';
+import { PgsPassportView } from './PgsPassportView';
 import {
   buildConfigurationView,
   ConfigurationCategory,
@@ -40,12 +41,16 @@ import {
 interface GeometryConfigurationPanelProps {
   geometryState: FullGeometryState;
   scale: number;
+  onStateUpdate?: (newState: FullGeometryState) => void;
 }
 
 export const GeometryConfigurationPanel: React.FC<GeometryConfigurationPanelProps> = ({
   geometryState,
   scale,
+  onStateUpdate,
 }) => {
+  const [passportMode, setPassportMode] = useState<'native' | 'pgs'>('native');
+
   // Transient projection computed on-demand from current state
   const configView = useMemo(() => {
     return buildConfigurationView(geometryState, { scale });
@@ -169,27 +174,53 @@ export const GeometryConfigurationPanel: React.FC<GeometryConfigurationPanelProp
           </div>
           <div>
             <h3 className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
-              <span>Семантическая конфигурация чертежа (GCM-01)</span>
+              <span>Семантический Паспорт Геометрии</span>
               <span className="px-2 py-0.5 rounded text-[10px] bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 font-mono">
-                Read-Only Projection
+                Dual Passport System
               </span>
             </h3>
             <p className="text-xs text-slate-300">
-              Единое структурированное представление геометрии для человека, Excel и AI
+              Нативный паспорт стенда (GCM-01) и межстендовый контракт (PGS-2D)
             </p>
           </div>
         </div>
 
-        {/* Quick Summary Chips */}
-        <div className="flex items-center gap-2 text-xs">
-          <span className="px-2.5 py-1 rounded-lg bg-indigo-900/60 border border-indigo-700/50 text-indigo-200 font-mono text-[11px]">
-            Сущностей: {configView.summary.totalRecords}
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 font-mono text-[11px]">
-            Q.E.D.: {configView.summary.verifiedTheoremCount}
-          </span>
+        {/* Dual Passport Mode Switcher */}
+        <div className="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+          <button
+            onClick={() => setPassportMode('native')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+              passportMode === 'native'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Table className="w-3.5 h-3.5" />
+            <span>Нативный (S-01..03)</span>
+          </button>
+          <button
+            onClick={() => setPassportMode('pgs')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+              passportMode === 'pgs'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+            <span>PGS-2D Passport</span>
+          </button>
         </div>
       </div>
+
+      {passportMode === 'pgs' ? (
+        <div className="p-4 bg-slate-950">
+          <PgsPassportView
+            geometryState={geometryState}
+            onStateUpdate={onStateUpdate || (() => {})}
+          />
+        </div>
+      ) : (
+        <>
 
       {/* Action Bar: Export & Formats */}
       <div className="p-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
@@ -562,6 +593,8 @@ export const GeometryConfigurationPanel: React.FC<GeometryConfigurationPanelProp
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };

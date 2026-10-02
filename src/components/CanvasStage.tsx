@@ -47,6 +47,11 @@ interface CanvasStageProps {
   onMoveSchoolPoint?: (pointId: string, modelPos: { x: number; y: number }) => void;
   onDragStart?: () => void;
   onDragCommit?: () => void;
+  // Overlay Lens Props
+  overlayEnabled?: boolean;
+  overlayMix?: number;
+  overlayPlane1State?: FullGeometryState;
+  overlayPlane2State?: FullGeometryState;
 }
 
 /**
@@ -163,6 +168,10 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   onMoveSchoolPoint,
   onDragStart,
   onDragCommit,
+  overlayEnabled = false,
+  overlayMix = 0.5,
+  overlayPlane1State,
+  overlayPlane2State,
 }) => {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -222,8 +231,8 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
 
   // Screen coordinates with system rotation around O
   const getScreenPos = useCallback(
-    (u: number) => {
-      const angle = u * 2 * Math.PI + rotationRad;
+    (u: number, currentRotationRad: number = rotationRad) => {
+      const angle = u * 2 * Math.PI + currentRotationRad;
       return {
         x: centerX + renderRadius * Math.cos(angle),
         y: centerY + renderRadius * Math.sin(angle),
@@ -257,6 +266,50 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     ctx.scale(dpr, dpr);
 
     ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+
+    const renderGeometryState = (
+      ctx: CanvasRenderingContext2D,
+      geomState: FullGeometryState,
+      alpha: number = 1
+    ) => {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      
+      const ptsU = {
+        A: geomState.points.A.u,
+        B: geomState.points.B.u,
+        C: geomState.points.C.u,
+      };
+      
+      const pA = getScreenPos(ptsU.A, rotationRad);
+      const pB = getScreenPos(ptsU.B, rotationRad);
+      const pC = getScreenPos(ptsU.C, rotationRad);
+
+      // Draw sides
+      ctx.beginPath();
+      ctx.moveTo(pA.x, pA.y);
+      ctx.lineTo(pB.x, pB.y);
+      ctx.lineTo(pC.x, pC.y);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.1)';
+      ctx.fill();
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Draw vertices
+      [pA, pB, pC].forEach(pos => {
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 8.5, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      });
+
+      ctx.restore();
+    };
 
     // 0. Outer Rotation Guide Track (subtle dashed ring)
     ctx.beginPath();
@@ -475,46 +528,51 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     }
 
     // 5. Draw Triangle Body (Chords AB, BC, CA)
-    ctx.beginPath();
-    ctx.moveTo(posA.x, posA.y);
-    ctx.lineTo(posB.x, posB.y);
-    ctx.lineTo(posC.x, posC.y);
-    ctx.closePath();
-
-    // Fill style depends on classification
-    if (engineResult.classification === 'right') {
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.08)'; // emerald tint
-    } else if (engineResult.classification === 'obtuse') {
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.08)'; // amber tint
+    if (overlayEnabled && overlayPlane1State && overlayPlane2State) {
+      renderGeometryState(ctx, overlayPlane1State, 1 - (overlayMix ?? 0.5));
+      renderGeometryState(ctx, overlayPlane2State, overlayMix ?? 0.5);
     } else {
-      ctx.fillStyle = 'rgba(99, 102, 241, 0.07)'; // indigo tint
-    }
-    ctx.fill();
-
-    // Draw individual chord borders (#334155 stroke-width 3 linecap round)
-    const drawSide = (
-      p1: { x: number; y: number },
-      p2: { x: number; y: number },
-      sideKey: 'AB' | 'BC' | 'CA',
-      oppVertex: VertexId
-    ) => {
-      const isSideActive =
-        (activeHighlight?.type === 'side' && activeHighlight.id === sideKey) ||
-        (activeHighlight?.type === 'arc' && activeHighlight.id === sideKey) ||
-        (activeHighlight?.type === 'vertex' && activeHighlight.id === oppVertex);
-
       ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = isSideActive ? '#4F46E5' : '#334155';
-      ctx.lineWidth = isSideActive ? 4 : 3;
-      ctx.stroke();
-    };
+      ctx.moveTo(posA.x, posA.y);
+      ctx.lineTo(posB.x, posB.y);
+      ctx.lineTo(posC.x, posC.y);
+      ctx.closePath();
 
-    drawSide(posA, posB, 'AB', 'C');
-    drawSide(posB, posC, 'BC', 'A');
-    drawSide(posC, posA, 'CA', 'B');
+      // Fill style depends on classification
+      if (engineResult.classification === 'right') {
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.08)'; // emerald tint
+      } else if (engineResult.classification === 'obtuse') {
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.08)'; // amber tint
+      } else {
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.07)'; // indigo tint
+      }
+      ctx.fill();
+
+      // Draw individual chord borders (#334155 stroke-width 3 linecap round)
+      const drawSide = (
+        p1: { x: number; y: number },
+        p2: { x: number; y: number },
+        sideKey: 'AB' | 'BC' | 'CA',
+        oppVertex: VertexId
+      ) => {
+        const isSideActive =
+          (activeHighlight?.type === 'side' && activeHighlight.id === sideKey) ||
+          (activeHighlight?.type === 'arc' && activeHighlight.id === sideKey) ||
+          (activeHighlight?.type === 'vertex' && activeHighlight.id === oppVertex);
+
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = isSideActive ? '#4F46E5' : '#334155';
+        ctx.lineWidth = isSideActive ? 4 : 3;
+        ctx.stroke();
+      };
+
+      drawSide(posA, posB, 'AB', 'C');
+      drawSide(posB, posC, 'BC', 'A');
+      drawSide(posC, posA, 'CA', 'B');
+    }
 
     // 6. Right Angle Square Marker (if Right Triangle)
     if (engineResult.classification === 'right' && engineResult.isRightAngleVertex) {
@@ -1202,8 +1260,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     posA,
     posB,
     posC,
-    knobPos.x,
-    knobPos.y,
+    knobPos,
     showRadii,
     showProtractor,
     scaleMode,
@@ -1223,6 +1280,10 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     hoverSmartTargetId,
     propR,
     scale,
+    overlayEnabled,
+    overlayMix,
+    overlayPlane1State,
+    overlayPlane2State,
   ]);
 
   // Pointer Interaction Handlers

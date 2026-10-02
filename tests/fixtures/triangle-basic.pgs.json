@@ -1,0 +1,207 @@
+{
+  "meta": {
+    "format": "PGS-2D",
+    "version": "0.1",
+    "generator": "Geometry Reasoning Stand 2 (Triangle Stand)",
+    "exportedAt": "2026-10-02T03:45:00.000Z",
+    "transferMode": "EXACT_STATE"
+  },
+  "sourceClaim": {
+    "verified": true,
+    "standId": "geometry-reasoning-stand-2",
+    "timestamp": "2026-10-02T03:45:00.000Z",
+    "comment": "Real export fixture generated from FullGeometryState SSOT"
+  },
+  "objects": [
+    {
+      "type": "Point2D",
+      "portableId": "pt_A",
+      "localId": "A",
+      "displayLabel": "A",
+      "role": "vertex",
+      "x": 100,
+      "y": 0
+    },
+    {
+      "type": "Point2D",
+      "portableId": "pt_B",
+      "localId": "B",
+      "displayLabel": "B",
+      "role": "vertex",
+      "x": -49.99999999999998,
+      "y": 86.60254037844388
+    },
+    {
+      "type": "Point2D",
+      "portableId": "pt_C",
+      "localId": "C",
+      "displayLabel": "C",
+      "role": "vertex",
+      "x": -50.00000000000004,
+      "y": -86.60254037844385
+    },
+    {
+      "type": "Point2D",
+      "portableId": "pt_O",
+      "localId": "O",
+      "displayLabel": "O",
+      "role": "center",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "type": "Segment2D",
+      "portableId": "edge_AB",
+      "localId": "chord_AB",
+      "displayLabel": "AB",
+      "role": "boundary_edge",
+      "p1Id": "pt_A",
+      "p2Id": "pt_B",
+      "length": 173.20508075688772
+    },
+    {
+      "type": "Segment2D",
+      "portableId": "edge_BC",
+      "localId": "chord_BC",
+      "displayLabel": "BC",
+      "role": "boundary_edge",
+      "p1Id": "pt_B",
+      "p2Id": "pt_C",
+      "length": 173.20508075688772
+    },
+    {
+      "type": "Segment2D",
+      "portableId": "edge_CA",
+      "localId": "chord_CA",
+      "displayLabel": "CA",
+      "role": "boundary_edge",
+      "p1Id": "pt_C",
+      "p2Id": "pt_A",
+      "length": 173.20508075688775
+    },
+    {
+      "type": "Polygon",
+      "portableId": "poly_ABC",
+      "localId": "triangle_ABC",
+      "displayLabel": "ΔABC",
+      "vertexCount": 3,
+      "vertexIds": [
+        "pt_A",
+        "pt_B",
+        "pt_C"
+      ]
+    },
+    {
+      "type": "Circle2D",
+      "portableId": "circle_circumcircle",
+      "localId": "base_circle",
+      "displayLabel": "ω",
+      "role": "circumcircle",
+      "centerId": "pt_O",
+      "radius": 100
+    }
+  ],
+  "topology": [
+    {
+      "type": "PolygonTopology",
+      "polygonId": "poly_ABC",
+      "vertexIds": [
+        "pt_A",
+        "pt_B",
+        "pt_C"
+      ],
+      "edgeIds": [
+        "edge_AB",
+        "edge_BC",
+        "edge_CA"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_concyclic_ABC",
+      "type": "concyclic",
+      "sourceIds": [
+        "pt_A",
+        "pt_B",
+        "pt_C",
+        "circle_circumcircle"
+      ],
+      "description": "Vertices A, B, C lie on circumcircle ω"
+    },
+    {
+      "id": "rel_center_O",
+      "type": "center_of",
+      "sourceIds": [
+        "pt_O",
+        "circle_circumcircle"
+      ],
+      "description": "Point O is center of circumcircle ω"
+    }
+  ],
+  "measurements": [
+    {
+      "id": "m_length_AB",
+      "targetId": "edge_AB",
+      "property": "length",
+      "value": 173.20508075688772,
+      "unit": "mm"
+    },
+    {
+      "id": "m_length_BC",
+      "targetId": "edge_BC",
+      "property": "length",
+      "value": 173.20508075688772,
+      "unit": "mm"
+    },
+    {
+      "id": "m_length_CA",
+      "targetId": "edge_CA",
+      "property": "length",
+      "value": 173.20508075688775,
+      "unit": "mm"
+    },
+    {
+      "id": "m_angle_A",
+      "targetId": "pt_A",
+      "property": "angle",
+      "value": 60,
+      "unit": "deg"
+    },
+    {
+      "id": "m_angle_B",
+      "targetId": "pt_B",
+      "property": "angle",
+      "value": 60,
+      "unit": "deg"
+    },
+    {
+      "id": "m_angle_C",
+      "targetId": "pt_C",
+      "property": "angle",
+      "value": 60,
+      "unit": "deg"
+    },
+    {
+      "id": "m_radius_R",
+      "targetId": "circle_circumcircle",
+      "property": "radius",
+      "value": 100,
+      "unit": "mm"
+    },
+    {
+      "id": "m_perimeter",
+      "targetId": "poly_ABC",
+      "property": "perimeter",
+      "value": 519.6152422706632,
+      "unit": "mm"
+    },
+    {
+      "id": "m_area",
+      "targetId": "poly_ABC",
+      "property": "area",
+      "value": 12990.38105676658,
+      "unit": "mm^2"
+    }
+  ]
+}
