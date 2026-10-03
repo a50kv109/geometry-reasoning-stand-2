@@ -47,3 +47,13 @@ The construction trace records the complete causal history of an experiment:
 Compares multiple independent experimental runs to verify universality:
 - Validates whether an observed invariant holds across distinct triangle classes (acute, right, obtuse).
 - Identifies topological bifurcation points (e.g. when an inscribed angle flips across the center).
+
+---
+
+## 6. Advanced Research Findings, DRPS, and ACP Integration
+Starting from Version 2.1.0, the Research Mode integrates the advanced, decoupled observation and persistent pipeline (Phase 3A..3C):
+1. **Research Findings Store (DRPS):** observed anomalies and invariants are saved line-by-line in the `research_findings.jsonl` atomic database, complete with canonical deduplication.
+2. **Deterministic Attention Policy:** ranks findings by epistemic status, novelty, impact, recurrence, and wear, returning a strict Top-5 focus window on the presentation layer.
+3. **Research Surface Facade:** exposes read-only finding maps to UI/Agent consumers.
+4. **Engineering Reflex (ACP):** coordinates trust metrics and outputs MAINTAIN, THROTTLE, DEGRADE_TRUST, or EMERGENCY_STOP signals through `ACPMock` (connected to upstream [acp-core](https://github.com/a50kv109/acp-core)).
+5. **Interactive UI Entry Point:** Accessible via the **` Находки и статус ACP`** tab under the `🔬 Исследование` panel.

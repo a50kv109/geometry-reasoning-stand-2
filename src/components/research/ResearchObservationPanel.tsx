@@ -8,7 +8,11 @@
 // 5. Dynamic Geometric Experiment (Chord-Arc Dynamic Relation with Manual Capture, Deltas, Hypotheses)
 // 6. Deterministic Research Snapshot / Experiment Result viewer and copier (timestamp-free guarantee)
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { ResearchFindingStore } from '../../kernel/research/researchFindingStore';
+import { ResearchAttentionPolicy } from '../../kernel/research/researchAttention';
+import { ResearchSurface } from '../../kernel/research/researchSurface';
+import { ACP_CORE_STATUS, ACPMock, ACPAdapter } from '../../kernel/geometryGraph/researchPipeline';
 import {
   Compass,
   GitFork,
@@ -61,10 +65,12 @@ export const ResearchObservationPanel: React.FC<ResearchObservationPanelProps> =
   scale,
 }) => {
   const [activeTab, setActiveTab] = useState<
-    'relations' | 'experiment' | 'ledger' | 'graph' | 'trace' | 'epistemic' | 'snapshot'
+    'relations' | 'experiment' | 'ledger' | 'graph' | 'trace' | 'epistemic' | 'snapshot' | 'attention'
   >('relations');
   const [copied, setCopied] = useState(false);
   const [selectedHypothesisId, setSelectedHypothesisId] = useState<string | null>(null);
+
+  const [findings, setFindings] = useState<any[]>([]);
 
   // Experiment State: Manual capture steps
   const [targetChordKey, setTargetChordKey] = useState<'AB' | 'BC' | 'CA'>('AB');
@@ -91,6 +97,41 @@ export const ResearchObservationPanel: React.FC<ResearchObservationPanelProps> =
   const researchGraph: ResearchGraph = useMemo(() => {
     return buildResearchGraph([experimentResult], geometryState, snapshot.constructionTrace);
   }, [experimentResult, geometryState, snapshot.constructionTrace]);
+
+  useEffect(() => {
+    const loadFindings = async () => {
+      const store = new ResearchFindingStore();
+      await store.load();
+      const policy = new ResearchAttentionPolicy(store);
+      const s = new ResearchSurface(policy);
+      setFindings(s.getResearchAttention(5));
+    };
+    loadFindings();
+  }, [geometryState]);
+
+  const acpStatus = useMemo(() => {
+    const mock = new ACPMock();
+    const adapter = new ACPAdapter(mock);
+    const totalClaims = snapshot.observations.length;
+    const verifiedClaims = snapshot.observations.filter(o => o.epistemicLevel === 'VERIFIED_INVARIANT').length;
+    const stability = totalClaims > 0 ? verifiedClaims / totalClaims : 1.0;
+    const hasViolated = stability < 1.0;
+    const wear = hasViolated ? 0.9 : 0.0;
+    
+    const signal = adapter.adaptAndProcess({
+      novelty: 0.5,
+      impact: 'LOW',
+      researchWear: wear,
+      stability: stability
+    });
+
+    return {
+      status: ACP_CORE_STATUS,
+      signal,
+      wear,
+      stability
+    };
+  }, [geometryState, snapshot]);
 
   const handleCaptureStep = () => {
     const newStep = captureExperimentStep(
@@ -261,6 +302,18 @@ export const ResearchObservationPanel: React.FC<ResearchObservationPanelProps> =
         >
           <FileCheck className="w-3.5 h-3.5 text-indigo-600" />
           <span>Срез состояния (JSON)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('attention')}
+          className={`px-3 py-2 font-bold rounded-t-lg transition flex items-center gap-1.5 whitespace-nowrap ${
+            activeTab === 'attention'
+              ? 'bg-white text-indigo-950 border-t border-x border-slate-200 shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Находки и статус ACP ({findings.length})</span>
         </button>
       </div>
 
@@ -1080,6 +1133,119 @@ export const ResearchObservationPanel: React.FC<ResearchObservationPanelProps> =
             <pre className="p-3 bg-slate-900 text-indigo-200 rounded-xl text-[11px] font-mono overflow-x-auto max-h-72 border border-slate-800">
               {JSON.stringify(snapshot, null, 2)}
             </pre>
+          </div>
+        )}
+
+        {/* TAB 6: ATTENTION (Top Findings & ACP Status) */}
+        {activeTab === 'attention' && (
+          <div className="space-y-4">
+            {/* ACP Status Widget */}
+            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+              <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                Интеграционный статус инженерного рефлекса ACP-Core
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                  <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">ACP-Core Connection</span>
+                  <strong className="text-amber-700 font-mono flex items-center gap-1.5 mt-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse inline-block" />
+                    BLOCKED_BY_DEPENDENCY ({acpStatus.status})
+                  </strong>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                  <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Mock Decision Engine</span>
+                  <strong className="text-emerald-700 font-semibold flex items-center gap-1.5 mt-1">
+                    <CheckCircle2 className="w-4 h-4" /> Active (ACPMock)
+                  </strong>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                  <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Reflex Output Signal</span>
+                  <strong className="text-indigo-700 font-mono text-xs block mt-1">
+                    {acpStatus.signal}
+                  </strong>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200">
+                  <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">Metrics (Wear / Stability)</span>
+                  <strong className="text-slate-800 font-mono text-xs block mt-1">
+                    {(acpStatus.wear * 100).toFixed(0)}% Wear / {(acpStatus.stability * 100).toFixed(0)}% Stab
+                  </strong>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-2 italic leading-relaxed">
+                * Интеграционная граница настроена на upstream репозиторий <strong>https://github.com/a50kv109/acp-core</strong> (commit-equivalent 4a1fec4). Реальное Python-ядро заменено на локальный JS-эмулятор ACPMock в соответствии со спецификацией.
+              </p>
+            </div>
+
+            {/* Top Findings list */}
+            <div>
+              <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                Топ-5 Активных находок (Окно внимания исследовательского контура)
+              </h5>
+              {findings.length === 0 ? (
+                <div className="p-6 text-center bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                  <HelpCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500">Активных находок не обнаружено. Произведите геометрические мутации для фиксации аномалий.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {findings.map((finding) => (
+                    <div
+                      key={finding.findingId}
+                      className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-slate-300 transition flex flex-col gap-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-50 text-indigo-700 uppercase tracking-wider">
+                            {finding.findingType}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            finding.status === 'VERIFIED'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : finding.status === 'REFUTED'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {finding.status}
+                          </span>
+                          <strong className="text-xs text-slate-900">{finding.findingId}</strong>
+                        </div>
+                        <div className="text-[11px] text-indigo-600 bg-indigo-50 font-mono font-bold px-2 py-0.5 rounded">
+                          Приоритет: {finding.researchPriority}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px] text-slate-600">
+                        <div>
+                          <span className="text-slate-400">Паттерн: </span>
+                          <strong className="font-mono text-slate-800">{finding.patternId}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Новизна: </span>
+                          <strong className="font-mono text-slate-800">{finding.noveltyScore.toFixed(2)}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Влияние: </span>
+                          <strong className="font-mono text-slate-800">{finding.impact}</strong>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Повторения: </span>
+                          <strong className="font-mono text-slate-800">{finding.recurrenceCount}</strong>
+                        </div>
+                      </div>
+
+                      <div className="text-[10px] text-slate-400 flex flex-wrap items-center gap-4 pt-1">
+                        <span>Первое наблюдение: {new Date(finding.firstObservedAt).toLocaleString()}</span>
+                        <span>Последнее: {new Date(finding.lastObservedAt).toLocaleString()}</span>
+                        <span>Взаимодействующие слои: {finding.involvedLayers.join(', ')}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
