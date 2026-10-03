@@ -88,37 +88,41 @@ Analytical verification of 7 canonical Euclidean rules (`src/engines/research/ca
 
 ## 4. Architecture (Архитектурная схема)
 
+GRS-2 is structured on a strict layered layout to decouple the mathematical geometry core from presentation clients and the persistent research finding store.
+
+For the detailed, authoritative current architectural design, see **[docs/GEOMETRY_REASONING_STAND_CURRENT_ARCHITECTURE.md](./docs/GEOMETRY_REASONING_STAND_CURRENT_ARCHITECTURE.md)**.
+
 ```
-        Human User (Web UI)            External AI Client (API)
-                 │                                   │
-                 └─────────────────┬─────────────────┘
-                                   │
-                                   ▼
-                      Universal Semantic Interface
-                     (src/engines/semantic/types.ts)
-                                   │
-                                   ▼
-                       Geometry Construction DAG
-              (dependencyRecomputer.ts / constructionCore.ts)
-                                   │
-                                   ▼
-                             GeometryState
-                     (Single Source of Truth / SSOT)
-                                   │
-              ┌────────────────────┴────────────────────┐
-              ▼                                         ▼
-     Semantic Relations                       Canonical Rules Base
-       (S-01, S-02, S-03)                      (canonicalRules.ts)
-              │                                         │
-              └────────────────────┬────────────────────┘
-                                   │
-                                   ▼
-                        Configuration Passport
-                   (Read-Only Semantic Projection)
-                                   │
-                                   ▼
-                       React Presentation Layer
-                 (Interactive Canvas, Tables, Panels)
+         Human User (Web UI)            External AI Client (API)
+                  │                                   │
+                  └─────────────────┬─────────────────┘
+                                    │
+                                    ▼
+                       Universal Semantic Interface
+                      (src/engines/semantic/types.ts)
+                                    │
+                                    ▼
+                        Geometry Construction DAG
+               (dependencyRecomputer.ts / constructionCore.ts)
+                                    │
+                                    ▼
+                              GeometryState
+                      (Single Source of Truth / SSOT)
+                                    │
+               ┌────────────────────┴────────────────────┐
+               ▼                                         ▼
+      Semantic Relations                       Canonical Rules Base
+        (S-01, S-02, S-03)                      (canonicalRules.ts)
+               │                                         │
+               └────────────────────┬────────────────────┘
+                                    │
+                                    ▼
+                         Configuration Passport
+                    (Read-Only Semantic Projection)
+                                    │
+                                    ▼
+                        React Presentation Layer
+                  (Interactive Canvas, Tables, Panels)
 ```
 
 ---
@@ -135,7 +139,9 @@ Analytical verification of 7 canonical Euclidean rules (`src/engines/research/ca
 | **Canonical Rules Base (7 rules)** | `IMPLEMENTED & VERIFIED` | Precondition evaluators for Thales, chords, bisectors, tangents |
 | **Configuration Passport (S-01..S-03)**| `IMPLEMENTED & VERIFIED` | Read-only projection of relations, constructions, and LaTeX values |
 | **Multilingual UI (RU/UK/EN)** | `IMPLEMENTED & VERIFIED` | Full localization with persistent language switcher in header |
-| **Research Mode Experiments** | `IMPLEMENTED & VERIFIED` | Parameter sweeps and invariant constancy checks |
+| **Research Finding Store (DRPS)** | `IMPLEMENTED & VERIFIED` | Persistent JSONL research finding store, isolated from Geometry Core |
+| **Research Attention Window** | `IMPLEMENTED & VERIFIED` | Deterministic ranking, Top-5 focus attention policy |
+| **Research Surface** | `IMPLEMENTED & VERIFIED` | Secure, unified read-only API facade for observed findings |
 | **Automated Lemma Discovery** | `PLANNED` | Current version verifies facts against rules; unguided synthesis is planned |
 | **3D Solid Geometry (Стереометрия)**| `OUT OF SCOPE` | The Stand is dedicated exclusively to Euclidean 2D planimetry |
 
@@ -180,7 +186,7 @@ Running `npm run test:all` executes all test suites sequentially:
 npm run test:all
 
 # Individual key suites:
-npm run test:kernel          # 74 autonomous kernel derivation tests
+npm run test:kernel          # 74 autonomous kernel derivation tests, plus Phase 1, Phase 2, Phase 2.1, Phase 3A, Phase 3B, Phase 3C tests
 npm run test:env             # 18 agent environment contract tests
 npm run test:project         # 30 project persistence & round-trip tests
 npm run test:aam             # 20 AAM Gateway benchmark tests
@@ -197,6 +203,7 @@ npm run build
 
 **Actual Verified Baseline on Current Codebase:**
 - `npm run test:all`: **22/22 suites passed (100% PASS)**
+- `npm run test:kernel` (Integrated verification matrix): **74 core + 57 Phase 1..3C tests passed (100% PASS)**
 - `npm run test:project`: **30/30 tests passed (100% PASS)**
 - `npm run lint`: **0 errors (clean TypeScript compilation)**
 - `npm run build`: **Successful production bundle build (Vite)**
@@ -207,6 +214,7 @@ npm run build
 
 Comprehensive technical documentation is available in `docs/`:
 
+- [docs/GEOMETRY_REASONING_STAND_CURRENT_ARCHITECTURE.md](./docs/GEOMETRY_REASONING_STAND_CURRENT_ARCHITECTURE.md) — **Primary Canonical Current Architectural Reference for GRS-2**.
 - [docs/OVERVIEW.md](./docs/OVERVIEW.md) — Mission, target audiences, and feature pillars.
 - [docs/GEOMETRY_PROJECT.md](./docs/GEOMETRY_PROJECT.md) — Geometry Project persistence model, schema versioning, and validation.
 - [docs/RELEASE_V2.md](./docs/RELEASE_V2.md) — Release notes for Version 2.1.0.
