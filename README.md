@@ -215,6 +215,7 @@ npm run build
 Comprehensive technical documentation is available in `docs/`:
 
 - [docs/GEOMETRY_REASONING_STAND_CURRENT_ARCHITECTURE.md](./docs/GEOMETRY_REASONING_STAND_CURRENT_ARCHITECTURE.md) — **Primary Canonical Current Architectural Reference for GRS-2**.
+- [docs/patterns/](./docs/patterns/README.md) — **Geometry Reasoning Pattern Library (GRPP)**: 31 empirical and architectural reasoning patterns.
 - [docs/OVERVIEW.md](./docs/OVERVIEW.md) — Mission, target audiences, and feature pillars.
 - [docs/GEOMETRY_PROJECT.md](./docs/GEOMETRY_PROJECT.md) — Geometry Project persistence model, schema versioning, and validation.
 - [docs/RELEASE_V2.md](./docs/RELEASE_V2.md) — Release notes for Version 2.1.0.
