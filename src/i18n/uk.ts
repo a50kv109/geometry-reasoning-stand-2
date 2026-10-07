@@ -65,6 +65,10 @@ export const uk: Record<string, string> = {
   // School Tools
   'school.tool.select': 'Виділення',
   'school.tool.select.desc': 'Виділення та переміщення точок',
+  'school.tool.deform_triangle': 'Перебудова △',
+  'school.tool.deform_triangle.desc': 'Перебудова трикутника (перетягування вершин A, B, C по колу)',
+  'school.tool.incircle': 'Вписане ◯',
+  'school.tool.incircle.desc': 'Вписане коло — побудувати живе коло, що залежить від поточного трикутника',
   'school.tool.point': 'Точка',
   'school.tool.point.desc': 'Поставити точку на площині або колі',
   'school.tool.segment': 'Відрізок',
@@ -90,6 +94,8 @@ export const uk: Record<string, string> = {
 
   // School Hints
   'school.hint.select': 'Клікніть і перетягніть будь-яку точку креслення',
+  'school.hint.deform_triangle': 'Потягніть вершину A, B або C по колу для динамічної перебудови трикутника',
+  'school.hint.incircle': 'Клікніть для побудови живого вписаного кола поточного трикутника ABC',
   'school.hint.point': 'Клікніть на площині або колі для створення точки',
   'school.hint.segment.step1': 'Клікніть першу точку відрізка',
   'school.hint.segment.step2': 'Клікніть другу точку відрізка (ESC для скасування)',
@@ -115,6 +121,9 @@ export const uk: Record<string, string> = {
   // School Actions & Buttons
   'school.action.clearConstructions': 'Очистити креслення',
   'school.action.clearConstructionsTooltip': 'Видалити всі користувацькі побудови (залишивши базовий трикутник і коло)',
+  'school.action.clearHistoryCache': 'Очистити історію',
+  'school.action.clearHistoryCacheTooltip': 'Очистити кеш історії змін та звільнити памʼять',
+  'school.action.historyCleared': 'Кеш та історію змін очищено',
   'school.action.closeMeasurement': 'Закрити вимірювання',
 
   // School Inventory & Pedagogy

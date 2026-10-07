@@ -18,6 +18,7 @@ import {
   pushHistoryState,
   popHistoryState,
   canUndo,
+  clearHistory,
   GeometryHistory,
 } from './engines/geometryHistory';
 import { createGeometrySnapshot, computeTransition } from './engines/temporalObserver';
@@ -274,6 +275,10 @@ function StandAppContent() {
           setPointsU(next.pointsU);
           setBaselineSnapshot(createGeometrySnapshot({ pointsU: next.pointsU, R, scale }));
         }
+        setResearchSession((sess) => ({
+          ...sess,
+          plane1: next,
+        }));
         return next;
       });
     },
@@ -284,13 +289,18 @@ function StandAppContent() {
   const handleChangePointsU = useCallback(
     (newPts: { A: number; B: number; C: number }) => {
       setPointsU(newPts);
-      setGeometryState((prev) =>
-        dispatchGeometryCommand(prev, {
+      setGeometryState((prev) => {
+        const next = dispatchGeometryCommand(prev, {
           type: 'SYNC_BASE_POINTS',
           pointsU: newPts,
           R,
-        })
-      );
+        });
+        setResearchSession((sess) => ({
+          ...sess,
+          plane1: next,
+        }));
+        return next;
+      });
     },
     [R]
   );
@@ -385,6 +395,11 @@ function StandAppContent() {
       }
     }
   }, [history, R, scale, selectedSchoolEntityId]);
+
+  const handleClearHistoryCache = useCallback(() => {
+    setHistory((curr) => clearHistory(curr));
+    preDragSnapshotRef.current = null;
+  }, []);
 
   // Global Ctrl+Z / Cmd+Z shortcut for Undo
   useEffect(() => {
@@ -649,6 +664,11 @@ function StandAppContent() {
           >
             <Undo2 className="w-3.5 h-3.5" />
             <span>{t('common.undo')}</span>
+            {history.past.length > 0 && (
+              <span className="px-1 py-0.2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded text-[10px] font-bold">
+                {history.past.length}
+              </span>
+            )}
           </button>
         </div>
       </header>
@@ -711,74 +731,51 @@ function StandAppContent() {
               onToggleOverlay={handleToggleOverlay}
               onChangeMix={handleChangeOverlayMix}
             />
-            {standMode === 'school' ? (
-              <SchoolModeWrapper
-                geometryState={geometryState}
-                onDispatchCommand={handleDispatchCommand}
-                scale={scale}
-                activeTool={activeSchoolTool}
-                onChangeTool={setActiveSchoolTool}
-                onUndo={handleUndo}
-                canUndo={canUndoAction}
-              >
-                {({ toolState, previewData, handlePointerDown, handlePointerMove, handlePointerUp }) => (
-                  <CanvasStage
-                    pointsU={pointsU}
-                    onChangePoints={handleChangePointsU}
-                    rotationDeg={rotationDeg}
-                    onChangeRotation={setRotationDeg}
-                    scaleMode={scaleMode}
-                    onChangeScaleMode={setScaleMode}
-                    activeHighlight={activeHighlight}
-                    onHoverHighlight={setActiveHighlight}
-                    engineResult={activeResult}
-                    R={R}
-                    scale={scale}
-                    onChangeScale={setScale}
-                    schoolMode={true}
-                    schoolState={geometryState}
-                    schoolPreview={previewData}
-                    activeTool={activeSchoolTool}
-                    rulerMeasurement={toolState.rulerMeasurement}
-                    smartTargets={toolState.angleBisectorTargets}
-                    hoverSmartTargetId={toolState.hoverSmartTargetId}
-                    onSchoolPointerDown={handlePointerDown}
-                    onSchoolPointerMove={handlePointerMove}
-                    onSchoolPointerUp={handlePointerUp}
-                    onMoveSchoolPoint={handleMoveSchoolPoint}
-                    onDragStart={handleDragStart}
-                    onDragCommit={handleDragCommit}
-                    overlayEnabled={researchSession.overlay.enabled}
-                    overlayMix={researchSession.overlay.mix}
-                    overlayPlane1State={researchSession.plane1}
-                    overlayPlane2State={researchSession.plane2?.geometryState}
-                  />
-                )}
-              </SchoolModeWrapper>
-            ) : (
-              <CanvasStage
-                pointsU={pointsU}
-                onChangePoints={handleChangePointsU}
-                rotationDeg={rotationDeg}
-                onChangeRotation={setRotationDeg}
-                scaleMode={scaleMode}
-                onChangeScaleMode={setScaleMode}
-                activeHighlight={activeHighlight}
-                onHoverHighlight={setActiveHighlight}
-                engineResult={activeResult}
-                R={R}
-                scale={scale}
-                onChangeScale={setScale}
-                schoolMode={false}
-                schoolState={activeGeometryState}
-                onDragStart={handleDragStart}
-                onDragCommit={handleDragCommit}
-                overlayEnabled={researchSession.overlay.enabled}
-                overlayMix={researchSession.overlay.mix}
-                overlayPlane1State={researchSession.plane1}
-                overlayPlane2State={researchSession.plane2?.geometryState}
-              />
-            )}
+            <SchoolModeWrapper
+              geometryState={activeGeometryState}
+              onDispatchCommand={handleDispatchCommand}
+              scale={scale}
+              activeTool={activeSchoolTool}
+              onChangeTool={setActiveSchoolTool}
+              onUndo={handleUndo}
+              canUndo={canUndoAction}
+              onClearHistoryCache={handleClearHistoryCache}
+              historyDepth={history.past.length}
+            >
+              {({ toolState, previewData, handlePointerDown, handlePointerMove, handlePointerUp }) => (
+                <CanvasStage
+                  pointsU={pointsU}
+                  onChangePoints={handleChangePointsU}
+                  rotationDeg={rotationDeg}
+                  onChangeRotation={setRotationDeg}
+                  scaleMode={scaleMode}
+                  onChangeScaleMode={setScaleMode}
+                  activeHighlight={activeHighlight}
+                  onHoverHighlight={setActiveHighlight}
+                  engineResult={activeResult}
+                  R={R}
+                  scale={scale}
+                  onChangeScale={setScale}
+                  schoolMode={true}
+                  schoolState={activeGeometryState}
+                  schoolPreview={previewData}
+                  activeTool={activeSchoolTool}
+                  rulerMeasurement={toolState.rulerMeasurement}
+                  smartTargets={toolState.angleBisectorTargets}
+                  hoverSmartTargetId={toolState.hoverSmartTargetId}
+                  onSchoolPointerDown={handlePointerDown}
+                  onSchoolPointerMove={handlePointerMove}
+                  onSchoolPointerUp={handlePointerUp}
+                  onMoveSchoolPoint={handleMoveSchoolPoint}
+                  onDragStart={handleDragStart}
+                  onDragCommit={handleDragCommit}
+                  overlayEnabled={researchSession.overlay.enabled}
+                  overlayMix={researchSession.overlay.mix}
+                  overlayPlane1State={researchSession.plane1}
+                  overlayPlane2State={researchSession.plane2?.geometryState}
+                />
+              )}
+            </SchoolModeWrapper>
           </div>
         </section>
 
@@ -805,20 +802,18 @@ function StandAppContent() {
           {/* Top Mode Switcher Bar */}
           <div className="flex flex-wrap items-center justify-between pb-3 border-b border-slate-200 gap-2">
             <div className="flex items-center p-1 bg-slate-200/80 rounded-xl border border-slate-300/70 shadow-2xs">
-              {standMode === 'school' && (
-                <button
-                  id="rightTabSchoolBtn"
-                  onClick={() => setRightPanelTab('school')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    rightPanelTab === 'school'
-                      ? 'bg-white text-indigo-950 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <PencilRuler className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>{t('workbench.rightTabSchool')}</span>
-                </button>
-              )}
+              <button
+                id="rightTabSchoolBtn"
+                onClick={() => setRightPanelTab('school')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  rightPanelTab === 'school'
+                    ? 'bg-white text-indigo-950 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <PencilRuler className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('workbench.rightTabSchool')}</span>
+              </button>
               <button
                 id="rightTabStatsBtn"
                 onClick={() => {

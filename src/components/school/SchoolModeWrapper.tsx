@@ -2,7 +2,7 @@
 // Interaction Layer & Multi-Step Tool State Machine for School Mode
 // Invariant: Translates user actions into Core commands; GeometryState remains single source of truth.
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { SchoolTool, ToolState, SchoolPreviewData, RulerMeasurement } from './schoolTypes';
 import {
   FullGeometryState,
@@ -18,6 +18,9 @@ import {
   pointToLineDistance,
   computeParallelPreviewIntersections,
   computePerpendicularPreviewIntersections,
+  planIncircle,
+  applyIncircle,
+  IncircleValidationFailure,
 } from '../../engines/geometryState';
 import { SchoolToolbar } from './SchoolToolbar';
 
@@ -29,6 +32,8 @@ interface SchoolModeWrapperProps {
   onChangeTool: (tool: SchoolTool) => void;
   onUndo?: () => void;
   canUndo?: boolean;
+  onClearHistoryCache?: () => void;
+  historyDepth?: number;
   children: (props: {
     toolState: ToolState;
     previewData: SchoolPreviewData | null;
@@ -53,6 +58,8 @@ export const SchoolModeWrapper: React.FC<SchoolModeWrapperProps> = ({
   onChangeTool,
   onUndo,
   canUndo = false,
+  onClearHistoryCache,
+  historyDepth = 0,
   children,
 }) => {
   const [toolState, setToolState] = useState<ToolState>({
@@ -74,8 +81,48 @@ export const SchoolModeWrapper: React.FC<SchoolModeWrapperProps> = ({
     return [];
   }, [activeTool, geometryState]);
 
-  // When activeTool changes from props, cancel any pending multi-step operation
+  const geometryStateRef = useRef(geometryState);
+  geometryStateRef.current = geometryState;
+  const onDispatchCommandRef = useRef(onDispatchCommand);
+  onDispatchCommandRef.current = onDispatchCommand;
+  const prevToolRef = useRef<SchoolTool>(activeTool);
+
+  // When activeTool changes from props, cancel any pending multi-step operation or execute immediate tools
   useEffect(() => {
+    if (prevToolRef.current === activeTool) {
+      return;
+    }
+    prevToolRef.current = activeTool;
+
+    if (activeTool === 'incircle') {
+      const plan = planIncircle(geometryStateRef.current, 'A', 'B', 'C');
+      if (plan.success === true) {
+        const alreadyExists = Object.values(geometryStateRef.current.circles).some(
+          (c) => c.provenance?.macroType === 'incircle'
+        );
+        if (!alreadyExists) {
+          onDispatchCommandRef.current({
+            type: 'BATCH_COMMANDS',
+            commands: plan.commands,
+          });
+        }
+        setToolState((prev) => ({
+          ...prev,
+          tool: activeTool,
+          status: 'IDLE',
+          lastActionMessage: 'Вписанная окружность построена (живая зависимость от △ABC)',
+        }));
+      } else {
+        setToolState((prev) => ({
+          ...prev,
+          tool: activeTool,
+          status: 'IDLE',
+          lastActionMessage: (plan as IncircleValidationFailure).errorMessage,
+        }));
+      }
+      return;
+    }
+
     setToolState((prev) => ({
       ...prev,
       tool: activeTool,
@@ -176,8 +223,24 @@ export const SchoolModeWrapper: React.FC<SchoolModeWrapperProps> = ({
       const modelPos = { x: snap.x, y: snap.y };
 
       switch (activeTool) {
-        case 'select': {
+        case 'select':
+        case 'deform_triangle': {
           // Handled via drag interactions in CanvasStage
+          break;
+        }
+
+        case 'incircle': {
+          const plan = planIncircle(geometryState, 'A', 'B', 'C');
+          if (plan.success) {
+            onDispatchCommand({
+              type: 'BATCH_COMMANDS',
+              commands: plan.commands,
+            });
+            setToolState((prev) => ({
+              ...prev,
+              lastActionMessage: 'Вписанная окружность построена (живая зависимость от △ABC)',
+            }));
+          }
           break;
         }
 
@@ -729,6 +792,12 @@ export const SchoolModeWrapper: React.FC<SchoolModeWrapperProps> = ({
     [toolState, angleBisectorTargets]
   );
 
+  const handleClearHistoryCache = useCallback(() => {
+    if (onClearHistoryCache) {
+      onClearHistoryCache();
+    }
+  }, [onClearHistoryCache]);
+
   return (
     <div className="flex flex-col w-full h-full gap-2">
       <SchoolToolbar
@@ -740,6 +809,8 @@ export const SchoolModeWrapper: React.FC<SchoolModeWrapperProps> = ({
         onClearConstructions={handleClearConstructions}
         onUndo={onUndo}
         canUndo={canUndo}
+        onClearHistoryCache={handleClearHistoryCache}
+        historyDepth={historyDepth}
         scale={scale}
       />
       <div className="flex-1 min-h-0 w-full relative">

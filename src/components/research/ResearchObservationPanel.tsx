@@ -107,7 +107,7 @@ export const ResearchObservationPanel: React.FC<ResearchObservationPanelProps> =
       setFindings(s.getResearchAttention(5));
     };
     loadFindings();
-  }, [geometryState]);
+  }, []);
 
   const acpStatus = useMemo(() => {
     const mock = new ACPMock();

@@ -58,6 +58,8 @@ To immediately understand what makes the Stand unique, try this classic scenario
 
 ### 🏫 School Mode (Школьный конструктор)
 - **Primitives:** Free points, constrained points on circles, line segments, infinite lines, circles by center and radius.
+- **Dynamic Triangle Reconstruction («Перестроение △»):** Move vertices of inscribed triangle along the circumcircle with continuous real-time deformation of the entire construction DAG.
+- **Live Incircle («Вписанная ◯» / `INCIRCLE(ABC)`):** Constructs live semantic inscribed circle bound directly to $\triangle ABC$. Incenter, radius, and tangency points recompute dynamically on deformation without relying on materialized bisector intersection snapshots (PAT-27).
 - **Classical Constructions:** Perpendicular bisectors, angle bisectors, orthogonal tangents (at boundary point and from external point), parallel lines, and altitudes.
 - **Dependency Propagation:** Full Directed Acyclic Graph (DAG) recomputing child positions via closed-form analytical formulas.
 
@@ -135,6 +137,7 @@ For the detailed, authoritative current architectural design, see **[docs/GEOMET
 | **Geometry Project Persistence** | `IMPLEMENTED & VERIFIED` | Versioned JSON format (`GeometryProjectV1`), transaction-safe Save/Open |
 | **AAM Language Gateway** | `IMPLEMENTED & VERIFIED` | Natural language intent extraction & execution across RU, UK, and EN |
 | **School Canvas & Toolbar** | `IMPLEMENTED & VERIFIED` | Point dragging, construction tools, object inventory |
+| **Live Incircle & Dynamic Deformation** | `IMPLEMENTED & VERIFIED` | Live `INCIRCLE(ABC)` dependency (PAT-27), continuous 3-side tangency verification |
 | **Semantic Interface (23 commands)**| `IMPLEMENTED & VERIFIED` | Complete typed schema, error codes, and invariance tests |
 | **Canonical Rules Base (7 rules)** | `IMPLEMENTED & VERIFIED` | Precondition evaluators for Thales, chords, bisectors, tangents |
 | **Configuration Passport (S-01..S-03)**| `IMPLEMENTED & VERIFIED` | Read-only projection of relations, constructions, and LaTeX values |
@@ -215,7 +218,7 @@ npm run build
 Comprehensive technical documentation is available in `docs/`:
 
 - [docs/GEOMETRY_REASONING_STAND_CURRENT_ARCHITECTURE.md](./docs/GEOMETRY_REASONING_STAND_CURRENT_ARCHITECTURE.md) — **Primary Canonical Current Architectural Reference for GRS-2**.
-- [docs/patterns/](./docs/patterns/README.md) — **Geometry Reasoning Pattern Library (GRPP)**: 31 empirical and architectural reasoning patterns.
+- [docs/patterns/](./docs/patterns/README.md) — **Geometry Reasoning Pattern Library (GRPP)**: 32 empirical and architectural reasoning patterns.
 - [docs/OVERVIEW.md](./docs/OVERVIEW.md) — Mission, target audiences, and feature pillars.
 - [docs/GEOMETRY_PROJECT.md](./docs/GEOMETRY_PROJECT.md) — Geometry Project persistence model, schema versioning, and validation.
 - [docs/RELEASE_V2.md](./docs/RELEASE_V2.md) — Release notes for Version 2.1.0.

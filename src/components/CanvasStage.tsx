@@ -201,7 +201,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         const availableWidth = Math.max(280, width);
         const availableHeight = Math.max(280, height);
         const size = Math.min(availableWidth, availableHeight);
-        setDimensions({ width: size, height: size });
+        setDimensions((prev) => (prev.width === size && prev.height === size ? prev : { width: size, height: size }));
       }
     });
 
@@ -651,8 +651,20 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       const isVertexActive =
         (activeHighlight?.type === 'vertex' && activeHighlight.id === id) ||
         (draggingMode === 'vertex' && activeVertex === id);
+      const isDeformMode = activeTool === 'deform_triangle';
 
-      if (isVertexActive) {
+      if (isDeformMode) {
+        // Distinct halo / ring for deformation mode
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 20, 0, 2 * Math.PI);
+        ctx.fillStyle = isVertexActive ? 'rgba(79, 70, 229, 0.28)' : 'rgba(79, 70, 229, 0.12)';
+        ctx.fill();
+        ctx.strokeStyle = isVertexActive ? '#4F46E5' : 'rgba(79, 70, 229, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (isVertexActive) {
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, 16, 0, 2 * Math.PI);
         ctx.fillStyle = 'rgba(79, 70, 229, 0.15)';
@@ -663,11 +675,11 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       }
 
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 8.5, 0, 2 * Math.PI);
-      ctx.fillStyle = '#ffffff';
+      ctx.arc(pos.x, pos.y, isDeformMode ? 9.5 : 8.5, 0, 2 * Math.PI);
+      ctx.fillStyle = isDeformMode ? '#EEF2FF' : '#ffffff';
       ctx.fill();
-      ctx.strokeStyle = isVertexActive ? '#4F46E5' : '#334155';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = isVertexActive || isDeformMode ? '#4F46E5' : '#334155';
+      ctx.lineWidth = isDeformMode ? 3.5 : 3;
       ctx.stroke();
 
       const nx = pos.x - centerX;
@@ -676,7 +688,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       const labelX = pos.x + (nx / dist) * 22;
       const labelY = pos.y + (ny / dist) * 22;
 
-      ctx.fillStyle = isVertexActive ? '#4F46E5' : '#1E293B';
+      ctx.fillStyle = isVertexActive || isDeformMode ? '#4F46E5' : '#1E293B';
       ctx.font = 'bold 16px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -1293,8 +1305,8 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     const x = clientX - rect.left;
     const y = clientY - rect.top;
 
-    // In School Mode with drawing tools other than 'select'
-    if (schoolMode && activeTool !== 'select') {
+    // In School Mode with drawing tools other than 'select' and 'deform_triangle'
+    if (schoolMode && activeTool !== 'select' && activeTool !== 'deform_triangle') {
       const modelPos = screenToModel(
         { x, y },
         centerX,
@@ -1394,7 +1406,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     const dx = x - centerX;
     const dy = y - centerY;
 
-    if (schoolMode && activeTool !== 'select') {
+    if (schoolMode && activeTool !== 'select' && activeTool !== 'deform_triangle') {
       const modelPos = screenToModel(
         { x, y },
         centerX,
@@ -1480,7 +1492,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   };
 
   const handlePointerUp = () => {
-    if (schoolMode && activeTool !== 'select') {
+    if (schoolMode && activeTool !== 'select' && activeTool !== 'deform_triangle') {
       onSchoolPointerUp?.();
     }
     if (draggingMode) {
@@ -1624,7 +1636,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           className={`touch-none ${
             activeTool === 'erase'
               ? 'cursor-crosshair'
-              : activeTool === 'select' || !schoolMode
+              : activeTool === 'select' || activeTool === 'deform_triangle' || !schoolMode
               ? 'cursor-grab active:cursor-grabbing'
               : 'cursor-crosshair'
           }`}

@@ -27,9 +27,10 @@ import {
 
 export interface MacroGroupInfo {
   groupId: string;
-  macroType: 'perpendicular' | 'parallel' | 'perpendicular_bisector' | 'angle_bisector';
+  macroType: 'perpendicular' | 'parallel' | 'perpendicular_bisector' | 'angle_bisector' | 'incircle';
   sourceIds: string[];
-  primaryLineId: string;
+  primaryLineId?: string;
+  primaryCircleId?: string;
 }
 
 /**
@@ -47,6 +48,20 @@ export function discoverMacroGroups(state: FullGeometryState): MacroGroupInfo[] 
           macroType,
           sourceIds: [...sourceIds],
           primaryLineId: lineId,
+        });
+      }
+    }
+  }
+
+  for (const [circId, circ] of Object.entries(state.circles)) {
+    if (circ.role === 'primary' && circ.provenance && circ.provenance.macroType === 'incircle') {
+      const { groupId, macroType, sourceIds } = circ.provenance;
+      if (groupId && macroType && sourceIds) {
+        groupsMap.set(groupId, {
+          groupId,
+          macroType,
+          sourceIds: [...sourceIds],
+          primaryCircleId: circId,
         });
       }
     }
@@ -80,7 +95,7 @@ export function recomputeDependentGeometry(state: FullGeometryState): FullGeomet
   const macroGroups = discoverMacroGroups(nextState);
 
   for (const macro of macroGroups) {
-    const { groupId, macroType, sourceIds, primaryLineId } = macro;
+    const { groupId, macroType, sourceIds, primaryLineId, primaryCircleId } = macro;
 
     if (macroType === 'perpendicular') {
       const [targetLineOrSegmentId, pointPId] = sourceIds;
@@ -623,6 +638,109 @@ export function recomputeDependentGeometry(state: FullGeometryState): FullGeomet
       if (validIntersections.length < existingIntIds.length) {
         for (let i = validIntersections.length; i < existingIntIds.length; i++) {
           delete nextPoints[existingIntIds[i]];
+        }
+      }
+    }
+
+    if (macroType === 'incircle') {
+      const [pAId, pBId, pCId] = sourceIds;
+      const ptA = nextPoints[pAId];
+      const ptB = nextPoints[pBId];
+      const ptC = nextPoints[pCId];
+
+      if (!ptA || !ptB || !ptC) continue;
+
+      const a = distance2D(ptB, ptC);
+      const b = distance2D(ptC, ptA);
+      const c = distance2D(ptA, ptB);
+
+      const perimeter = a + b + c;
+      const s = perimeter / 2;
+
+      const cross = (ptB.x - ptA.x) * (ptC.y - ptA.y) - (ptC.x - ptA.x) * (ptB.y - ptA.y);
+      const area = Math.abs(cross) / 2;
+
+      let r = 0;
+      let incenter: Point2D = { x: 0, y: 0 };
+
+      if (perimeter > 1e-4 && area > 1e-4) {
+        r = area / s;
+        incenter = {
+          x: (a * ptA.x + b * ptB.x + c * ptC.x) / perimeter,
+          y: (a * ptA.y + b * ptB.y + c * ptC.y) / perimeter,
+        };
+      } else {
+        // Degenerate triangle handling (safe fallback without NaN/Infinity)
+        incenter = {
+          x: (ptA.x + ptB.x + ptC.x) / 3,
+          y: (ptA.y + ptB.y + ptC.y) / 3,
+        };
+        r = 0;
+      }
+
+      // Update incenter point
+      const incenterId = `pt_incircle_I_${groupId}`;
+      if (nextPoints[incenterId]) {
+        nextPoints[incenterId] = {
+          ...nextPoints[incenterId],
+          x: incenter.x,
+          y: incenter.y,
+        };
+      }
+
+      // Update primary incircle
+      const incircleId = primaryCircleId || `circ_incircle_${groupId}`;
+      if (nextCircles[incircleId]) {
+        nextCircles[incircleId] = {
+          ...nextCircles[incircleId],
+          centerId: incenterId,
+          radius: r,
+        };
+      }
+
+      // Update tangent points
+      const tangentAId = `pt_incircle_TA_${groupId}`;
+      if (nextPoints[tangentAId]) {
+        const dx = ptC.x - ptB.x;
+        const dy = ptC.y - ptB.y;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq > 1e-8) {
+          const t = ((incenter.x - ptB.x) * dx + (incenter.y - ptB.y) * dy) / lenSq;
+          nextPoints[tangentAId] = {
+            ...nextPoints[tangentAId],
+            x: ptB.x + t * dx,
+            y: ptB.y + t * dy,
+          };
+        }
+      }
+
+      const tangentBId = `pt_incircle_TB_${groupId}`;
+      if (nextPoints[tangentBId]) {
+        const dx = ptA.x - ptC.x;
+        const dy = ptA.y - ptC.y;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq > 1e-8) {
+          const t = ((incenter.x - ptC.x) * dx + (incenter.y - ptC.y) * dy) / lenSq;
+          nextPoints[tangentBId] = {
+            ...nextPoints[tangentBId],
+            x: ptC.x + t * dx,
+            y: ptC.y + t * dy,
+          };
+        }
+      }
+
+      const tangentCId = `pt_incircle_TC_${groupId}`;
+      if (nextPoints[tangentCId]) {
+        const dx = ptB.x - ptA.x;
+        const dy = ptB.y - ptA.y;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq > 1e-8) {
+          const t = ((incenter.x - ptA.x) * dx + (incenter.y - ptA.y) * dy) / lenSq;
+          nextPoints[tangentCId] = {
+            ...nextPoints[tangentCId],
+            x: ptA.x + t * dx,
+            y: ptA.y + t * dy,
+          };
         }
       }
     }

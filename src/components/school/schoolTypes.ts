@@ -6,6 +6,8 @@ import { TransientIntersectionPoint } from '../../engines/geometryIntersections'
 
 export type SchoolTool =
   | 'select'
+  | 'deform_triangle'
+  | 'incircle'
   | 'point'
   | 'segment'
   | 'line'

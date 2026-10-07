@@ -357,3 +357,26 @@ If you are another AI system taking over this repository, follow this execution 
   * `researchAttention.ts` (`ResearchAttentionPolicy`): Calculates deterministic Top-5 attention using the total priority score.
   * `researchSurface.ts` (`ResearchSurface`): Decoupled read-only presentation facade.
 * Execute `/src/kernel/tests/cliTestRunner.ts` by running `npm run test:kernel`. This will execute all tests sequentially and print a full verification trace of all 131 tests to confirm absolute correctness.
+
+---
+
+## 35. Dynamic Triangle Reconstruction & Live Incircle (PAT-27)
+
+### Dynamic Triangle Reconstruction («Перестроение △»)
+- **Mode:** `deform_triangle` in `SchoolToolbar.tsx` and `CanvasStage.tsx`.
+- **Behavior:** User drags vertices $A, B, C$ continuously along the circumcircle via `SYNC_BASE_POINTS`.
+- **DAG Recomputation:** All dependent geometric entities (tangents, perpendiculars, bisectors, incircle) propagate updates deterministically through `recomputeGeometricDependencies()`.
+
+### Live Incircle Macro (`INCIRCLE(ABC)`)
+- **Semantic Macro:** Defined in `src/engines/incircle.ts` and `src/engines/dependencyRecomputer.ts`.
+- **Live Dependency vs Materialized Snapshot (PAT-27):** Unlike manual bisector intersection snapshots (`intersect()`) which do not update automatically on vertex displacement, `INCIRCLE(ABC)` binds to the triangle itself. Its incenter $I$, radius $r$, and tangency points $T_A, T_B, T_C$ recompute live on every frame.
+- **Independent Verification:** Tested via `verifyIncircle()` across non-degenerate scalene/equilateral configurations and degenerate collapses (`npm run test:incircle`).
+
+---
+
+## 36. UI React Stability Protocol
+
+To prevent re-render cascades and `Maximum update depth exceeded` exceptions:
+1. **Tool Switch Isolation (`SchoolModeWrapper.tsx`):** The `useEffect` tracking tool switching depends exclusively on `[activeTool]`. Dynamic parameters (`geometryState`, `onDispatchCommand`) are accessed through stable `useRef` handles (`geometryStateRef`, `onDispatchCommandRef`).
+2. **State Transition Guard:** Multi-step tool resets check `prevToolRef.current === activeTool` before dispatching state mutations, eliminating redundant renders.
+3. **Resize Observer Boundary (`CanvasStage.tsx`):** `setDimensions` uses functional state equality checking `prev.width === size && prev.height === size` to guard against ResizeObserver feedback loops.

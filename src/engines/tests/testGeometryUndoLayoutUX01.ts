@@ -12,6 +12,7 @@ import {
   pushHistoryState,
   popHistoryState,
   canUndo,
+  clearHistory,
   areGeometryStatesEqual,
   GeometryHistory,
 } from '../geometryHistory';
@@ -389,6 +390,36 @@ assert(stateTryEraseAB.segments['chord_AB'] !== undefined, 'ERASER-UX-05: Base c
 assert(stateTryEraseAB.segments['chord_AB'].isBaseChord === true, 'ERASER-UX-05: chord_AB remains base chord');
 console.log('✅ ERASER-UX-05 PASSED: Base geometric structures are immutable to the Eraser tool.\n');
 
+// -------------------------------------------------------------------
+// TEST CLEAR-CACHE-01: clearHistory resets past stack, sets canUndo to false, preserves present
+// -------------------------------------------------------------------
+console.log('🧪 TEST CLEAR-CACHE-01: clearHistory resets past stack while preserving present state...');
+let stateWithHistory = createDefaultGeometryState({ A: 0.1, B: 0.4, C: 0.7 }, 100);
+let activeHistory = createInitialHistory(stateWithHistory);
+
+const op1 = dispatchGeometryCommand(stateWithHistory, {
+  type: 'ADD_POINT',
+  point: { id: 'pt_cache1', name: 'C1', x: 15, y: 25 },
+});
+activeHistory = pushHistoryState(activeHistory, op1);
+
+const op2 = dispatchGeometryCommand(op1, {
+  type: 'ADD_POINT',
+  point: { id: 'pt_cache2', name: 'C2', x: 35, y: 45 },
+});
+activeHistory = pushHistoryState(activeHistory, op2);
+
+assert(activeHistory.past.length === 2, 'CLEAR-CACHE-01: Past stack has 2 entries before clear');
+assert(canUndo(activeHistory) === true, 'CLEAR-CACHE-01: canUndo is true before clear');
+
+// Execute clear history cache
+activeHistory = clearHistory(activeHistory);
+
+assert(activeHistory.past.length === 0, 'CLEAR-CACHE-01: Past stack is 0 after clearHistory');
+assert(canUndo(activeHistory) === false, 'CLEAR-CACHE-01: canUndo is false after clearHistory');
+assert(areGeometryStatesEqual(activeHistory.present, op2), 'CLEAR-CACHE-01: Current present state is preserved');
+console.log('✅ CLEAR-CACHE-01 PASSED: clearHistory clears stack and preserves current state.\n');
+
 console.log('======================================================================');
-console.log('  ALL UX-01 TESTS PASSED SUCCESSFULLY (21/21)');
+console.log('  ALL UX-01 TESTS PASSED SUCCESSFULLY (22/22)');
 console.log('======================================================================\n');

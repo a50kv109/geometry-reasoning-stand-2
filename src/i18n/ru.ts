@@ -64,6 +64,10 @@ export const ru: Record<string, string> = {
   // School Tools
   'school.tool.select': 'Выделение',
   'school.tool.select.desc': 'Выделение и перемещение точек',
+  'school.tool.deform_triangle': 'Перестроение △',
+  'school.tool.deform_triangle.desc': 'Перестроение треугольника (перетаскивание вершин A, B, C по окружности)',
+  'school.tool.incircle': 'Вписанная ◯',
+  'school.tool.incircle.desc': 'Вписанная окружность — построить живую окружность, зависящую от текущего треугольника',
   'school.tool.point': 'Точка',
   'school.tool.point.desc': 'Поставить точку на плоскости или окружности',
   'school.tool.segment': 'Отрезок',
@@ -89,6 +93,8 @@ export const ru: Record<string, string> = {
 
   // School Hints
   'school.hint.select': 'Кликните и перетащите любую точку чертежа',
+  'school.hint.deform_triangle': 'Потяните вершину A, B или C по окружности для динамического перестроения треугольника',
+  'school.hint.incircle': 'Кликните для построения живой вписанной окружности текущего треугольника ABC',
   'school.hint.point': 'Кликните на плоскости или окружности для создания точки',
   'school.hint.segment.step1': 'Кликните первую точку отрезка',
   'school.hint.segment.step2': 'Кликните вторую точку отрезка (ESC для отмены)',
@@ -114,6 +120,9 @@ export const ru: Record<string, string> = {
   // School Actions & Buttons
   'school.action.clearConstructions': 'Очистить чертёж',
   'school.action.clearConstructionsTooltip': 'Удалить все пользовательские построения (оставив базовый треугольник и окружность)',
+  'school.action.clearHistoryCache': 'Очистить историю',
+  'school.action.clearHistoryCacheTooltip': 'Очистить кэш истории изменений и освободить память',
+  'school.action.historyCleared': 'Кэш и история изменений очищены',
   'school.action.closeMeasurement': 'Закрыть измерение',
 
   // School Inventory & Pedagogy

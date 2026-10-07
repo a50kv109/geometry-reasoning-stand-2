@@ -189,3 +189,4 @@ export * from './perpendicularLine';
 export * from './parallelLine';
 export * from './dependencyRecomputer';
 export * from './parametricAngleSolver';
+export * from './incircle';

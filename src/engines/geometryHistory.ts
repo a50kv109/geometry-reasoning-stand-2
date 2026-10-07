@@ -80,6 +80,17 @@ export function popHistoryState(history: GeometryHistory): {
 }
 
 /**
+ * Clears the history stack, resetting past entries and retaining the current state.
+ */
+export function clearHistory(history: GeometryHistory): GeometryHistory {
+  return {
+    past: [],
+    present: history.present,
+    maxDepth: history.maxDepth,
+  };
+}
+
+/**
  * Returns true if undo is available
  */
 export function canUndo(history: GeometryHistory): boolean {

@@ -6,6 +6,8 @@ import { SchoolTool, ToolState } from './schoolTypes';
 import { useI18n } from '../../i18n';
 import {
   MousePointer,
+  Triangle,
+  CircleDot,
   Dot,
   Minus,
   MoveHorizontal,
@@ -20,6 +22,8 @@ import {
   X,
   RotateCcw,
   Undo2,
+  Trash2,
+  History,
 } from 'lucide-react';
 
 interface SchoolToolbarProps {
@@ -31,6 +35,8 @@ interface SchoolToolbarProps {
   onClearConstructions: () => void;
   onUndo?: () => void;
   canUndo?: boolean;
+  onClearHistoryCache?: () => void;
+  historyDepth?: number;
   scale?: number;
 }
 
@@ -40,6 +46,8 @@ const TOOL_CONFIGS: {
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
   { id: 'select', shortKey: 'V', icon: MousePointer },
+  { id: 'deform_triangle', shortKey: 'D', icon: Triangle },
+  { id: 'incircle', shortKey: 'I', icon: CircleDot },
   { id: 'point', shortKey: 'P', icon: Dot },
   { id: 'segment', shortKey: 'S', icon: Minus },
   { id: 'line', shortKey: 'L', icon: MoveHorizontal },
@@ -62,6 +70,8 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
   onClearConstructions,
   onUndo,
   canUndo = false,
+  onClearHistoryCache,
+  historyDepth = 0,
   scale = 1.0,
 }) => {
   const { t } = useI18n();
@@ -71,6 +81,10 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
     switch (activeTool) {
       case 'select':
         return t('school.hint.select');
+      case 'deform_triangle':
+        return t('school.hint.deform_triangle');
+      case 'incircle':
+        return toolState.lastActionMessage || t('school.hint.incircle');
       case 'point':
         return t('school.hint.point');
       case 'segment':
@@ -160,7 +174,7 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
           })}
         </div>
 
-        {/* Action Group: Undo & Clear Drawing */}
+        {/* Action Group: Undo, Clear History Cache & Clear Drawing */}
         <div className="flex items-center gap-1.5">
           {/* Centralized Geometry Undo Button */}
           <button
@@ -180,6 +194,31 @@ export const SchoolToolbar: React.FC<SchoolToolbarProps> = ({
           >
             <Undo2 className="w-3.5 h-3.5" />
             <span>{t('common.undo')}</span>
+            {historyDepth > 0 && (
+              <span className="ml-0.5 px-1 py-0.2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded text-[10px] font-bold">
+                {historyDepth}
+              </span>
+            )}
+          </button>
+
+          {/* Clear History / Cache Button */}
+          <button
+            id="clearHistoryCacheBtn"
+            onClick={onClearHistoryCache}
+            disabled={!onClearHistoryCache || historyDepth === 0}
+            title={
+              historyDepth > 0
+                ? t('school.action.clearHistoryCacheTooltip')
+                : t('school.action.clearHistoryCacheTooltip')
+            }
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition border ${
+              historyDepth > 0
+                ? 'bg-white hover:bg-amber-50 text-amber-700 hover:text-amber-800 border-slate-300 hover:border-amber-300 shadow-2xs cursor-pointer'
+                : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-50'
+            }`}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>{t('school.action.clearHistoryCache')}</span>
           </button>
 
           {/* Clear user constructions button */}

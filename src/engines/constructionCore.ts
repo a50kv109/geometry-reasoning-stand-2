@@ -9,7 +9,7 @@ import { recomputeDependentGeometry } from './dependencyRecomputer';
 export type GeometryRole = 'primary' | 'auxiliary';
 
 export interface GeometryProvenance {
-  macroType: 'perpendicular_bisector' | 'angle_bisector' | 'perpendicular' | 'parallel';
+  macroType: 'perpendicular_bisector' | 'angle_bisector' | 'perpendicular' | 'parallel' | 'incircle';
   sourceIds: string[];
   groupId: string;
 }

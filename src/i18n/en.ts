@@ -65,6 +65,10 @@ export const en: Record<string, string> = {
   // School Tools
   'school.tool.select': 'Select',
   'school.tool.select.desc': 'Select and move points',
+  'school.tool.deform_triangle': 'Deform △',
+  'school.tool.deform_triangle.desc': 'Deform triangle (drag vertices A, B, C along circumcircle)',
+  'school.tool.incircle': 'Incircle ◯',
+  'school.tool.incircle.desc': 'Incircle — construct live incircle depending on current triangle',
   'school.tool.point': 'Point',
   'school.tool.point.desc': 'Place a point on the plane or circumcircle',
   'school.tool.segment': 'Segment',
@@ -90,6 +94,8 @@ export const en: Record<string, string> = {
 
   // School Hints
   'school.hint.select': 'Click and drag any point on the canvas',
+  'school.hint.deform_triangle': 'Drag vertex A, B, or C along the circumcircle to dynamically deform triangle',
+  'school.hint.incircle': 'Click to construct live incircle for current triangle ABC',
   'school.hint.point': 'Click on the plane or circumcircle to create a point',
   'school.hint.segment.step1': 'Click the first point of the segment',
   'school.hint.segment.step2': 'Click the second point of the segment (ESC to cancel)',
@@ -115,6 +121,9 @@ export const en: Record<string, string> = {
   // School Actions & Buttons
   'school.action.clearConstructions': 'Clear Drawing',
   'school.action.clearConstructionsTooltip': 'Remove all user constructions (retaining baseline triangle and circumcircle)',
+  'school.action.clearHistoryCache': 'Clear History',
+  'school.action.clearHistoryCacheTooltip': 'Clear undo history cache and free memory',
+  'school.action.historyCleared': 'History and cache cleared',
   'school.action.closeMeasurement': 'Close measurement',
 
   // School Inventory & Pedagogy
